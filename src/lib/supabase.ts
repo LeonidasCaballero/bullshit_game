@@ -82,15 +82,8 @@ export const subscribeToAnswers = (roundId: string, onUpdate: (answers: any[]) =
 };
 
 // Create a realtime subscription for rounds
-export const subscribeToRound = (roundId: string, onUpdate: (round: any) => void) => {
-  const channel = supabase.channel(`round-${roundId}`, {
-    config: {
-      broadcast: { self: true },
-      presence: { key: roundId }
-    }
-  });
-
-  channel
+export const subscribeToRound = (roundId: string, onUpdate: (round: Round) => void) => {
+  return supabase.channel(`round-${roundId}`)
     .on(
       'postgres_changes',
       {
@@ -100,25 +93,15 @@ export const subscribeToRound = (roundId: string, onUpdate: (round: any) => void
         filter: `id=eq.${roundId}`
       },
       (payload) => {
-        console.log('Round update received:', payload);
-        try {
-          if (payload.new) {
-            onUpdate(payload.new);
-          }
-        } catch (err) {
-          console.error('Error in round subscription handler:', err);
+        console.log('Round updated:', payload);
+        if (payload.new) {
+          onUpdate(payload.new as Round);
         }
       }
     )
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log(`Subscribed to round ${roundId}`);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error(`Error subscribing to round ${roundId}`);
-      }
+      console.log(`Round subscription status: ${status}`);
     });
-
-  return channel;
 };
 
 // Create a subscription for votes

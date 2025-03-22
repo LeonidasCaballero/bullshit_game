@@ -1,11 +1,10 @@
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supabase";
-import { ArrowLeft, Timer, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Timer, ChevronLeft } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
-import { ModeratorView } from "../../components/ModeratorView";
 
 interface AnswerOption {
   content: string;
