@@ -1,0 +1,1 @@
+export { ShareGame } from "./ShareGame";
