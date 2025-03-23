@@ -6,6 +6,11 @@ import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supaba
 import { ArrowLeft, Timer, ChevronLeft } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
+// Add this with other interfaces
+type AnswerResponse = Pick<Answer, 'content' | 'player_id'> & {
+  players: { name: string; avatar_color: string; }[];
+};
+
 interface AnswerOption {
   content: string;
   isCorrectAnswer?: boolean;
@@ -70,31 +75,32 @@ export const GameRound = (): JSX.Element => {
         try {
           // First load the answers and question with retry logic
           const [answersData, questionData, votesData] = await Promise.all([
-            fetchWithRetry<Answer[]>(
-              async () => await supabase
-                .from('answers')
-                .select(`
-                  content,
-                  player_id,
-                  players (
-                    name,
-                    avatar_color
-                  )
-                `)
-                .eq('round_id', round.id)
+            fetchWithRetry<AnswerResponse[]>(
+              async () => {
+                const response = await supabase
+                  .from('answers')
+                  .select(`
+                    content,
+                    player_id,
+                    players (
+                      name,
+                      avatar_color
+                    )
+                  `)
+                  .eq('round_id', round.id);
+                return { data: response.data as AnswerResponse[], error: response.error };
+              }
             ),
-            fetchWithRetry<Question>(
-              async () => await supabase
-                .from('questions')
-                .select('*')
-                .eq('id', round.question_id)
-                .single()
+            fetchWithRetry<Question>(async () => 
+              supabase.from('questions').select('*').eq('id', round.question_id).single()
+                .then(response => ({ data: response.data as Question, error: response.error }))
             ),
             fetchWithRetry<Vote[]>(
               async () => await supabase
                 .from('votes')
                 .select('*')
                 .eq('round_id', round.id)
+                .then(response => ({ data: response.data as Vote[], error: response.error }))
             )
           ]);
 
@@ -287,11 +293,13 @@ export const GameRound = (): JSX.Element => {
         
         // 1. Obtener datos básicos en paralelo
         const [playersData, roundData] = await Promise.all([
-          fetchWithRetry<Player[]>(() => 
+          fetchWithRetry<Player[]>(async () => 
             supabase.from('players').select('*').eq('game_id', gameId)
+              .then(response => ({ data: response.data as Player[], error: response.error }))
           ),
-          fetchWithRetry<Round>(() => 
+          fetchWithRetry<Round>(async () => 
             supabase.from('rounds').select('*').eq('id', location.state.roundId).single()
+              .then(response => ({ data: response.data as Round, error: response.error }))
           )
         ]);
 
@@ -301,13 +309,18 @@ export const GameRound = (): JSX.Element => {
 
         // 2. Obtener la pregunta usando el ID correcto
         const questionData = roundData.question_id ? 
-          await fetchWithRetry<Question>(() => 
-            supabase.from('questions').select('*').eq('id', roundData.question_id).single()
+          await fetchWithRetry<Question>(async () => 
+            supabase.from('questions')
+              .select('*')
+              .eq('id', roundData.question_id)
+              .single()
+              .then(response => ({ data: response.data as Question, error: response.error }))
           ) : null;
 
         // 3. Obtener respuestas
-        const answersData = await fetchWithRetry<Answer[]>(() => 
+        const answersData = await fetchWithRetry<Answer[]>(async () => 
           supabase.from('answers').select('*').eq('round_id', roundData.id)
+            .then(response => ({ data: response.data as Answer[], error: response.error }))
         );
 
         if (!playersData || playersData.length === 0) {
@@ -365,6 +378,7 @@ export const GameRound = (): JSX.Element => {
                 .select('*')
                 .eq('id', updatedRound.question_id)
                 .single()
+                .then(response => ({ data: response.data as Question, error: response.error }))
             );
 
             if (questionData) {
