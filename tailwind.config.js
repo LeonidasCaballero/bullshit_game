@@ -66,10 +66,54 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        slideLeft: {
+          '0%': { 
+            transform: 'translateX(100vw) rotate(5deg)', 
+            opacity: 0 
+          },
+          '100%': { 
+            transform: 'translateX(0) rotate(0deg)', 
+            opacity: 1 
+          }
+        },
+        slideRight: {
+          '0%': { 
+            transform: 'translateX(-100vw) rotate(-5deg)', 
+            opacity: 0 
+          },
+          '100%': { 
+            transform: 'translateX(0) rotate(0deg)', 
+            opacity: 1 
+          }
+        },
+        exitLeft: {
+          '0%': { 
+            transform: 'translateX(0) rotate(0deg)', 
+            opacity: 1 
+          },
+          '100%': { 
+            transform: 'translateX(-100vw) rotate(-5deg)', 
+            opacity: 0 
+          }
+        },
+        exitRight: {
+          '0%': { 
+            transform: 'translateX(0) rotate(0deg)', 
+            opacity: 1 
+          },
+          '100%': { 
+            transform: 'translateX(100vw) rotate(5deg)', 
+            opacity: 0 
+          }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        slideLeft: 'slideLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        slideRight: 'slideRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        exitLeft: 'exitLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        exitRight: 'exitRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
       },
     },
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },

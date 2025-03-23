@@ -18,6 +18,11 @@ interface AnswerOption {
   playerName?: string;
 }
 
+interface ExitingCard {
+  index: number;
+  content: string;
+}
+
 export const GameRound = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,12 +49,13 @@ export const GameRound = (): JSX.Element => {
   const [selectedVote, setSelectedVote] = useState<string | null>(null);
   const [allPlayersVoted, setAllPlayersVoted] = useState(false);
   const [votes, setVotes] = useState<Vote[]>([]);
-  const [isResultsPhase, setIsResultsPhase] = useState(false);
   const [resultsCountdown, setResultsCountdown] = useState<number>(20);
   
   const answersChannelRef = useRef<any>(null);
   const roundChannelRef = useRef<any>(null);
-  const votesChannelRef = useRef<any>(null);
+
+  const [slideDirection, setSlideDirection] = useState('right');
+  const [exitingCards, setExitingCards] = useState<ExitingCard[]>([]);
 
   const fetchWithRetry = async <T,>(
     fetcher: () => Promise<{ data: T; error: any }>,
@@ -255,9 +261,31 @@ export const GameRound = (): JSX.Element => {
 
   const handleNextAnswer = () => {
     if (currentAnswerIndex < shuffledAnswers.length - 1) {
-      setCurrentAnswerIndex(prev => prev + 1);
+      setExitingCards(prev => [...prev, {
+        index: currentAnswerIndex,
+        content: shuffledAnswers[currentAnswerIndex].content
+      }]);
+      setSlideDirection('left');
+      setTimeout(() => {
+        setCurrentAnswerIndex(prev => prev + 1);
+        setExitingCards([]);
+      }, 400);
     } else {
       handleFinishReadingAnswers();
+    }
+  };
+
+  const handlePrevAnswer = () => {
+    if (currentAnswerIndex > 0) {
+      setExitingCards(prev => [...prev, {
+        index: currentAnswerIndex,
+        content: shuffledAnswers[currentAnswerIndex].content
+      }]);
+      setSlideDirection('right');
+      setTimeout(() => {
+        setCurrentAnswerIndex(prev => prev - 1);
+        setExitingCards([]);
+      }, 400);
     }
   };
 
@@ -485,12 +513,6 @@ export const GameRound = (): JSX.Element => {
     }
   };
 
-  const handlePrevAnswer = () => {
-    if (currentAnswerIndex > 0) {
-      setCurrentAnswerIndex(prev => prev - 1);
-    }
-  };
-
   const getCategoryIcon = () => {
     switch (round?.category) {
       case 'pelicula': return '🎬';
@@ -498,19 +520,6 @@ export const GameRound = (): JSX.Element => {
       case 'personaje': return '👤';
       default: return '';
     }
-  };
-
-  // Función auxiliar para determinar la fase actual
-  const getCurrentPhase = () => {
-    if (round?.voting_phase) return "FASE DE VOTACIÓN";
-    if (isReadingAnswers) return "FASE DE LECTURA";
-    return "FASE DE RESPUESTA";
-  };
-
-  // Función para obtener el rol del jugador
-  const getPlayerRole = () => {
-    if (isModerator) return "MODERADOR";
-    return "JUGADOR";
   };
 
   useEffect(() => {
@@ -760,9 +769,18 @@ export const GameRound = (): JSX.Element => {
 
         <div className="w-full max-w-[327px] mt-8">
           {question && (
-            <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
-              <p className="text-xl">{question.text}</p>
-              <p className="text-xl font-bold mt-2">{question.content}</p>
+            <div className="space-y-4">
+              <div className="bg-[#131309] rounded-[20px] p-6">
+                <p className="text-white text-xl text-center">
+                  {question.text}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-[20px] p-6">
+                <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+                  {question.content}
+                </p>
+              </div>
             </div>
           )}
 
@@ -860,9 +878,18 @@ export const GameRound = (): JSX.Element => {
 
         <div className="w-full max-w-[327px] mt-8">
           {question && (
-            <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
-              <p className="text-xl">{question.text}</p>
-              <p className="text-xl font-bold mt-2">{question.content}</p>
+            <div className="space-y-4">
+              <div className="bg-[#131309] rounded-[20px] p-6">
+                <p className="text-white text-xl text-center">
+                  {question.text}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-[20px] p-6">
+                <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+                  {question.content}
+                </p>
+              </div>
             </div>
           )}
 
@@ -967,6 +994,79 @@ export const GameRound = (): JSX.Element => {
     );
   }
 
+  if (round?.reading_phase) {
+    return (
+      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+          BULLSHIT
+        </h1>
+
+        <div className="w-full max-w-[327px] mt-8 space-y-4">
+          <div className="bg-[#131309] rounded-[20px] p-6">
+            <p className="text-white text-xl text-center">
+              {question?.text}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-[20px] p-6">
+            <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+              {question?.content}
+            </p>
+          </div>
+        </div>
+
+        {isModerator && question && !isReadingAnswers && (
+          <div className="fixed bottom-0 left-0 right-0">
+            <div className="bg-white w-full px-6 pt-5 pb-8">
+              <div className="max-w-[327px] mx-auto flex flex-col items-center">
+                <Timer className="w-8 h-8 text-[#131309] mb-2" />
+                <p className="text-[#131309] text-xl font-bold mb-1">
+                  Esperando las respuestas
+                </p>
+                {pendingPlayers.length > 0 ? (
+                  <>
+                    <p className="text-[#131309] text-base mb-4">
+                      Quedan {pendingPlayers.length} jugadores por enviar la suya:
+                    </p>
+                    <div className="w-full space-y-2 mb-4">
+                      {pendingPlayers.map(player => (
+                        <div 
+                          key={player.id}
+                          className="flex items-center gap-3 p-3 bg-[#E7E7E6] rounded-[10px]"
+                        >
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-base"
+                            style={{ backgroundColor: player.avatar_color }}
+                          >
+                            {player.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="flex-1 font-normal text-base text-[#131309]">
+                            {player.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[#131309] text-base mb-4">
+                    ¡Todas las respuestas recibidas!
+                  </p>
+                )}
+                <Button
+                  className="w-full h-12 bg-[#E7E7E6] text-[#131309] hover:bg-[#d1d1d0] rounded-[10px] font-bold text-base"
+                  onClick={handleStartReadingAnswers}
+                  disabled={pendingPlayers.length > 0}
+                >
+                  Leer las respuestas
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
       <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
@@ -980,40 +1080,74 @@ export const GameRound = (): JSX.Element => {
       {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
         <>
           <div className="w-full max-w-[327px] mt-8">
-            {question && (
-              <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
-                <p className="text-xl">{question.text}</p>
-                <p className="text-xl font-bold mt-2">{question.content}</p>
-              </div>
-            )}
+            <p className="text-[#131309] text-xl mb-6">
+              {question?.text} {question?.content}
+            </p>
 
-            <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
-              <p className="text-center">
+            <div className="bg-[#131309] rounded-[20px] p-6 mb-6">
+              <p className="text-white text-center">
                 Lee las respuestas al resto de jugadores.
                 Se han ordenado aleatoriamente junto a la respuesta real.
               </p>
             </div>
 
-            <div className="bg-white rounded-[20px] p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[#131309] text-xl">
-                  Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
-                </p>
-                {shuffledAnswers[currentAnswerIndex].isCorrectAnswer && (
-                  <span className="text-[#9FFF00] bg-[#131309] px-3 py-1 rounded-full text-sm font-bold">
-                    Respuesta real
-                  </span>
-                )}
-                {shuffledAnswers[currentAnswerIndex].playerName && (
-                  <span className="text-[#131309] text-sm">
-                    {shuffledAnswers[currentAnswerIndex].playerName}
-                  </span>
-                )}
-              </div>
-              <div className="bg-white rounded-[10px] p-4 border-2 border-[#13130920]">
-                <p className="text-[#131309] text-xl font-['Londrina_Solid']" style={{ fontFamily: 'cursive' }}>
-                  {shuffledAnswers[currentAnswerIndex].content}
-                </p>
+            <div className="relative h-[300px]">
+              {exitingCards.map(card => (
+                <div
+                  key={`exiting-${card.index}`}
+                  className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
+                    slideDirection === 'left' ? 'animate-exitLeft' : 'animate-exitRight'
+                  }`}
+                  style={{
+                    zIndex: 100 + card.index,
+                    transform: `rotate(${(card.index % 3 - 1) * 2}deg)`,
+                  }}
+                >
+                  <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-[#131309] text-xl">
+                        Opción {card.index + 1} de {shuffledAnswers.length}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-[10px] p-4 h-[200px]">
+                      <p 
+                        className="text-[#131309] text-2xl"
+                        style={{ fontFamily: 'Caveat, cursive' }}
+                      >
+                        {card.content}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Carta actual con animación */}
+              <div 
+                className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
+                  slideDirection === 'left' 
+                    ? 'animate-slideLeft' 
+                    : 'animate-slideRight'
+                }`}
+                style={{
+                  zIndex: currentAnswerIndex + 1,
+                  transform: `rotate(${(currentAnswerIndex % 3 - 1) * 2}deg)`,
+                }}
+              >
+                <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[#131309] text-xl">
+                      Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-[10px] p-4 h-[200px]">
+                    <p 
+                      className="text-[#131309] text-2xl"
+                      style={{ fontFamily: 'Caveat, cursive' }}
+                    >
+                      {shuffledAnswers[currentAnswerIndex].content}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1094,9 +1228,18 @@ export const GameRound = (): JSX.Element => {
             <>
               {question && (
                 <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
-                  <div className="bg-[#131309] text-white p-4 rounded-[10px]">
-                    <p className="text-lg">{question.text}</p>
-                    <p className="text-xl font-bold mt-2">{question.content}</p>
+                  <div className="space-y-4">
+                    <div className="bg-[#131309] rounded-[20px] p-6">
+                      <p className="text-white text-xl text-center">
+                        {question.text}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-[20px] p-6">
+                      <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+                        {question.content}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1105,14 +1248,14 @@ export const GameRound = (): JSX.Element => {
                 <div className="fixed bottom-0 left-0 right-0">
                   <div className="bg-white w-full px-6 pt-5 pb-8">
                     <div className="max-w-[327px] mx-auto space-y-4">
-                      <Input
-                        className="w-full p-3 border border-[#13130940] rounded-[10px]"
+                      <textarea
+                        className="w-full min-h-[120px] p-4 border border-[#13130920] rounded-[20px] text-[#131309] resize-none"
                         placeholder="Tu respuesta"
                         value={answer}
                         onChange={(e) => setAnswer(e.target.value)}
                       />
                       <Button
-                        className="w-full h-12 bg-[#CB1517] hover: bg-[#B31315] rounded-[10px] font-bold text-base"
+                        className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
                         onClick={handleSubmitAnswer}
                         disabled={!answer.trim()}
                       >
@@ -1133,11 +1276,16 @@ export const GameRound = (): JSX.Element => {
                         </p>
                       ) : (
                         <>
-                          <p className="text-[#131309] text-xl font-bold mb-4">
-                            Respuesta enviada
+                          <div className="w-16 h-16 bg-[#131309] rounded-full flex items-center justify-center mb-6">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                              <path d="M20 6L9 17L4 12" stroke="#9FFF00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <p className="text-[#131309] text-2xl font-bold mb-4">
+                            ¡Respuesta enviada!
                           </p>
-                          <p className="text-[#131309] text-base">
-                            Esperando al resto de jugadores...
+                          <p className="text-[#131309] text-base text-center">
+                            {moderator?.name} os leerá vuestra mierda de respuestas cuando todos la hayan enviado.
                           </p>
                         </>
                       )}
