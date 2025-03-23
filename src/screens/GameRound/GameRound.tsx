@@ -3,7 +3,7 @@ import { Input } from "../../components/ui/input";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supabase";
-import { ArrowLeft, Timer, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Timer, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
 // Add this with other interfaces
@@ -22,6 +22,16 @@ interface ExitingCard {
   index: number;
   content: string;
 }
+
+// Añadir este componente para el overlay
+const ReadingOverlay = () => (
+  <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
+    <Loader2 className="h-8 w-8 animate-spin text-white mb-4" />
+    <p className="text-white text-lg text-center px-4">
+      El moderador está leyendo vuestras burradas
+    </p>
+  </div>
+);
 
 export const GameRound = (): JSX.Element => {
   const navigate = useNavigate();
@@ -476,6 +486,15 @@ export const GameRound = (): JSX.Element => {
     if (!question || !round) return;
 
     try {
+      // Primero actualizar el estado de la ronda
+      const { error: updateError } = await supabase
+        .from('rounds')
+        .update({ reading_phase: true })
+        .eq('id', round.id);
+
+      if (updateError) throw updateError;
+
+      // Luego obtener las respuestas
       const { data: answersWithPlayers, error: answersError } = await supabase
         .from('answers')
         .select(`
@@ -663,6 +682,35 @@ export const GameRound = (): JSX.Element => {
       });
     }
   }, [round?.results_phase, resultsCountdown, round?.id, gameId, navigate, currentPlayer?.name, round?.number]);
+
+  useEffect(() => {
+    if (!gameId || !round?.id) return;
+
+    const roundChannel = supabase
+      .channel(`round-${round.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rounds',
+          filter: `id=eq.${round.id}`
+        },
+        (payload) => {
+          const updatedRound = payload.new as Round;
+          setRound(updatedRound);
+          // Actualizar isReadingAnswers cuando el moderador inicia la lectura
+          if (updatedRound.reading_phase) {
+            setIsReadingAnswers(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      roundChannel.unsubscribe();
+    };
+  }, [gameId, round?.id]);
 
   if (isLoading) {
     return (
@@ -997,69 +1045,122 @@ export const GameRound = (): JSX.Element => {
   if (round?.reading_phase) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+        {/* Solo mostrar el overlay para los no moderadores */}
+        {!isModerator && <ReadingOverlay />}
+
         <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
           BULLSHIT
         </h1>
 
-        <div className="w-full max-w-[327px] mt-8 space-y-4">
-          <div className="bg-[#131309] rounded-[20px] p-6">
-            <p className="text-white text-xl text-center">
-              {question?.text}
-            </p>
-          </div>
+        {/* Solo mostrar las cards si es moderador y está en fase de lectura */}
+        {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
+          <>
+            <div className="w-full max-w-[327px] mt-8">
+              <p className="text-[#131309] text-xl mb-6">
+                {question?.text} {question?.content}
+              </p>
 
-          <div className="bg-white rounded-[20px] p-6">
-            <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
-              {question?.content}
-            </p>
-          </div>
-        </div>
-
-        {isModerator && question && !isReadingAnswers && (
-          <div className="fixed bottom-0 left-0 right-0">
-            <div className="bg-white w-full px-6 pt-5 pb-8">
-              <div className="max-w-[327px] mx-auto flex flex-col items-center">
-                <Timer className="w-8 h-8 text-[#131309] mb-2" />
-                <p className="text-[#131309] text-xl font-bold mb-1">
-                  Esperando las respuestas
+              <div className="bg-[#131309] rounded-[20px] p-6 mb-6">
+                <p className="text-white text-center">
+                  Lee las respuestas al resto de jugadores.
+                  Se han ordenado aleatoriamente junto a la respuesta real.
                 </p>
-                {pendingPlayers.length > 0 ? (
-                  <>
-                    <p className="text-[#131309] text-base mb-4">
-                      Quedan {pendingPlayers.length} jugadores por enviar la suya:
-                    </p>
-                    <div className="w-full space-y-2 mb-4">
-                      {pendingPlayers.map(player => (
-                        <div 
-                          key={player.id}
-                          className="flex items-center gap-3 p-3 bg-[#E7E7E6] rounded-[10px]"
-                        >
-                          <div 
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-base"
-                            style={{ backgroundColor: player.avatar_color }}
-                          >
-                            {player.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="flex-1 font-normal text-base text-[#131309]">
-                            {player.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-[#131309] text-base mb-4">
-                    ¡Todas las respuestas recibidas!
-                  </p>
-                )}
-                <Button
-                  className="w-full h-12 bg-[#E7E7E6] text-[#131309] hover:bg-[#d1d1d0] rounded-[10px] font-bold text-base"
-                  onClick={handleStartReadingAnswers}
-                  disabled={pendingPlayers.length > 0}
-                >
-                  Leer las respuestas
-                </Button>
               </div>
+
+              <div className="relative h-[300px]">
+                {exitingCards.map(card => (
+                  <div
+                    key={`exiting-${card.index}`}
+                    className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
+                      slideDirection === 'left' ? 'animate-exitLeft' : 'animate-exitRight'
+                    }`}
+                    style={{
+                      zIndex: 100 + card.index,
+                      transform: `rotate(${(card.index % 3 - 1) * 2}deg)`,
+                    }}
+                  >
+                    <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-[#131309] text-xl">
+                          Opción {card.index + 1} de {shuffledAnswers.length}
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-[10px] p-4 h-[200px]">
+                        <p 
+                          className="text-[#131309] text-2xl"
+                          style={{ fontFamily: 'Caveat, cursive' }}
+                        >
+                          {card.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Carta actual con animación */}
+                <div 
+                  className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
+                    slideDirection === 'left' 
+                      ? 'animate-slideLeft' 
+                      : 'animate-slideRight'
+                  }`}
+                  style={{
+                    zIndex: currentAnswerIndex + 1,
+                    transform: `rotate(${(currentAnswerIndex % 3 - 1) * 2}deg)`,
+                  }}
+                >
+                  <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-[#131309] text-xl">
+                        Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-[10px] p-4 h-[200px]">
+                      <p 
+                        className="text-[#131309] text-2xl"
+                        style={{ fontFamily: 'Caveat, cursive' }}
+                      >
+                        {shuffledAnswers[currentAnswerIndex].content}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="fixed bottom-0 left-0 right-0">
+              <div className="bg-white w-full px-6 pt-5 pb-8">
+                <div className="max-w-[327px] mx-auto flex gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={handlePrevAnswer}
+                    disabled={currentAnswerIndex === 0}
+                    className="w-12 h-12 bg-[#E7E7E6] rounded-[10px] flex items-center justify-center"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </Button>
+                  <Button
+                    className="flex-1 h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+                    onClick={handleNextAnswer}
+                  >
+                    {currentAnswerIndex === shuffledAnswers.length - 1 ? "Finalizar" : "Siguiente"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="w-full max-w-[327px] mt-8 space-y-4">
+            <div className="bg-[#131309] rounded-[20px] p-6">
+              <p className="text-white text-xl text-center">
+                {question?.text}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-[20px] p-6">
+              <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+                {question?.content}
+              </p>
             </div>
           </div>
         )}
