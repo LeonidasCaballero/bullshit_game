@@ -735,7 +735,7 @@ export const GameRound = (): JSX.Element => {
           </Button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center">
-          <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mb-16">
+          <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mb-16">
             BULLSHIT
           </h1>
           <div className="w-full max-w-[327px] bg-white rounded-[20px] p-5 space-y-5">
@@ -777,7 +777,7 @@ export const GameRound = (): JSX.Element => {
 
       return (
         <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-          <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+          <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
             BULLSHIT
           </h1>
           
@@ -807,7 +807,7 @@ export const GameRound = (): JSX.Element => {
 
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
           BULLSHIT
         </h1>
         
@@ -815,7 +815,7 @@ export const GameRound = (): JSX.Element => {
           RONDA {round.number}
         </p>
 
-        <div className="w-full max-w-[327px] mt-8">
+        <div className="w-full max-w-[375px] mt-8">
           {question && (
             <div className="space-y-4">
               <div className="bg-[#131309] rounded-[20px] p-6">
@@ -824,7 +824,7 @@ export const GameRound = (): JSX.Element => {
                 </p>
               </div>
 
-              <div className="bg-white rounded-[20px] p-6">
+              <div className="bg-white rounded-[20px] p-4">
                 <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
                   {question.content}
                 </p>
@@ -916,7 +916,7 @@ export const GameRound = (): JSX.Element => {
   if (round?.results_phase) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
           BULLSHIT
         </h1>
         
@@ -924,7 +924,7 @@ export const GameRound = (): JSX.Element => {
           RONDA {round.number}
         </p>
 
-        <div className="w-full max-w-[327px] mt-8">
+        <div className="w-full max-w-[375px] mt-8">
           {question && (
             <div className="space-y-4">
               <div className="bg-[#131309] rounded-[20px] p-6">
@@ -933,7 +933,7 @@ export const GameRound = (): JSX.Element => {
                 </p>
               </div>
 
-              <div className="bg-white rounded-[20px] p-6">
+              <div className="bg-white rounded-[20px] p-4">
                 <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
                   {question.content}
                 </p>
@@ -1035,7 +1035,7 @@ export const GameRound = (): JSX.Element => {
   if (round?.scoring_phase) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center justify-center">
-        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309]">
+        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309]">
           Puntuaciones
         </h1>
       </div>
@@ -1048,19 +1048,21 @@ export const GameRound = (): JSX.Element => {
         {/* Solo mostrar el overlay para los no moderadores */}
         {!isModerator && <ReadingOverlay />}
 
-        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
           BULLSHIT
         </h1>
 
         {/* Solo mostrar las cards si es moderador y está en fase de lectura */}
         {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
           <>
-            <div className="w-full max-w-[327px] mt-8">
-              <p className="text-[#131309] text-xl mb-6">
-                {question?.text} {question?.content}
-              </p>
+            <div className="w-full max-w-[375px] mt-8">
+              <div className="text-center mb-6">
+                <p className="text-[#131309] text-lg font-bold">
+                  {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
+                </p>
+              </div>
 
-              <div className="bg-[#131309] rounded-[20px] p-6 mb-6">
+              <div className="bg-[#131309] rounded-[20px] p-6 px-8 py-4 mb-6">
                 <p className="text-white text-center">
                   Lee las respuestas al resto de jugadores.
                   Se han ordenado aleatoriamente junto a la respuesta real.
@@ -1150,14 +1152,14 @@ export const GameRound = (): JSX.Element => {
             </div>
           </>
         ) : (
-          <div className="w-full max-w-[327px] mt-8 space-y-4">
+          <div className="w-full max-w-[375px] mt-8 space-y-4">
             <div className="bg-[#131309] rounded-[20px] p-6">
               <p className="text-white text-xl text-center">
                 {question?.text}
               </p>
             </div>
 
-            <div className="bg-white rounded-[20px] p-6">
+            <div className="bg-white rounded-[20px] p-4">
               <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
                 {question?.content}
               </p>
@@ -1170,7 +1172,7 @@ export const GameRound = (): JSX.Element => {
 
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-      <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+      <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
         BULLSHIT
       </h1>
       
@@ -1180,12 +1182,14 @@ export const GameRound = (): JSX.Element => {
 
       {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
         <>
-          <div className="w-full max-w-[327px] mt-8">
-            <p className="text-[#131309] text-xl mb-6">
-              {question?.text} {question?.content}
-            </p>
+          <div className="w-full max-w-[375px] mt-8">
+            <div className="text-center mb-6">
+              <p className="text-[#131309] text-lg font-bold">
+                {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
+              </p>
+            </div>
 
-            <div className="bg-[#131309] rounded-[20px] p-6 mb-6">
+            <div className="bg-[#131309] rounded-[20px] p-6 px-8 py-4 mb-6">
               <p className="text-white text-center">
                 Lee las respuestas al resto de jugadores.
                 Se han ordenado aleatoriamente junto a la respuesta real.
@@ -1336,7 +1340,7 @@ export const GameRound = (): JSX.Element => {
                       </p>
                     </div>
 
-                    <div className="bg-white rounded-[20px] p-6">
+                    <div className="bg-white rounded-[20px] p-4">
                       <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
                         {question.content}
                       </p>
@@ -1356,7 +1360,7 @@ export const GameRound = (): JSX.Element => {
                         onChange={(e) => setAnswer(e.target.value)}
                       />
                       <Button
-                        className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+                        className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] text-white rounded-[10px] font-bold text-base"
                         onClick={handleSubmitAnswer}
                         disabled={!answer.trim()}
                       >
@@ -1399,12 +1403,12 @@ export const GameRound = (): JSX.Element => {
                 <div className="fixed bottom-0 left-0 right-0">
                   <div className="bg-white w-full px-6 pt-5 pb-8">
                     <div className="max-w-[327px] mx-auto flex flex-col items-center">
-                      <Timer className="w-8 h-8 text-[#131309] mb-2" />
-                      <p className="text-[#131309] text-xl font-bold mb-1">
-                        Esperando las respuestas
-                      </p>
                       {pendingPlayers.length > 0 ? (
                         <>
+                          <Timer className="w-8 h-8 text-[#131309] mb-2" />
+                          <p className="text-[#131309] text-xl font-bold mb-1">
+                            Esperando las respuestas
+                          </p>
                           <p className="text-[#131309] text-base mb-4">
                             Quedan {pendingPlayers.length} jugadores por enviar la suya:
                           </p>
@@ -1433,7 +1437,7 @@ export const GameRound = (): JSX.Element => {
                         </p>
                       )}
                       <Button
-                        className="w-full h-12 bg-[#E7E7E6] text-[#131309] hover:bg-[#d1d1d0] rounded-[10px] font-bold text-base"
+                        className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] text-white rounded-[10px] font-bold text-base"
                         onClick={handleStartReadingAnswers}
                         disabled={pendingPlayers.length > 0}
                       >
