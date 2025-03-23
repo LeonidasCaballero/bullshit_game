@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
 
 export const NextRound = () => {
   const location = useLocation();
@@ -7,18 +8,12 @@ export const NextRound = () => {
   const { gameId } = useParams();
 
   useEffect(() => {
-    // Navegar a la intro después de un breve momento
+    // Esperar un momento y navegar a la intro
     const timer = setTimeout(() => {
       navigate(`/game/${gameId}/round/intro`, {
-        state: { 
-          playerName: location.state?.playerName,
-          roundNumber: location.state?.roundNumber,
-          roundId: location.state?.roundId,
-          moderatorId: location.state?.moderatorId,
-          category: location.state?.category
-        }
+        state: location.state
       });
-    }, 1500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [gameId, navigate, location.state]);
@@ -28,6 +23,7 @@ export const NextRound = () => {
       <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309]">
         Siguiente Ronda
       </h1>
+      <p className="text-[#131309] text-lg mt-4">Preparando la ronda...</p>
     </div>
   );
 }; 

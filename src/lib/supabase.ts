@@ -83,7 +83,8 @@ export const subscribeToAnswers = (roundId: string, onUpdate: (answers: any[]) =
 
 // Create a realtime subscription for rounds
 export const subscribeToRound = (roundId: string, onUpdate: (round: Round) => void) => {
-  return supabase.channel(`round-${roundId}`)
+  return supabase
+    .channel(`round_${roundId}`)
     .on(
       'postgres_changes',
       {
@@ -99,9 +100,7 @@ export const subscribeToRound = (roundId: string, onUpdate: (round: Round) => vo
         }
       }
     )
-    .subscribe((status) => {
-      console.log(`Round subscription status: ${status}`);
-    });
+    .subscribe();
 };
 
 // Create a subscription for votes

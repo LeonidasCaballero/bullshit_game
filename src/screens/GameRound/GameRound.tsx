@@ -82,9 +82,6 @@ export const GameRound = (): JSX.Element => {
                   )
                 `)
                 .eq('round_id', round.id)
-                .then(),
-              3,
-              1000
             ),
             fetchWithRetry<Question>(
               async () => await supabase
@@ -92,18 +89,12 @@ export const GameRound = (): JSX.Element => {
                 .select('*')
                 .eq('id', round.question_id)
                 .single()
-                .then(),
-              3,
-              1000
             ),
             fetchWithRetry<Vote[]>(
               async () => await supabase
                 .from('votes')
                 .select('*')
                 .eq('round_id', round.id)
-                .then(),
-              3,
-              1000
             )
           ]);
 
@@ -292,15 +283,31 @@ export const GameRound = (): JSX.Element => {
 
     const setupGame = async () => {
       try {
-        // 1. Obtener jugadores
-        const playersData = await fetchWithRetry<Player[]>(
-          async () => await supabase
-            .from('players')
-            .select('*')
-            .eq('game_id', gameId)
-            .then(),
-          maxRetries,
-          retryDelay
+        console.log('🚀 Iniciando setup del juego...');
+        
+        // 1. Obtener datos básicos en paralelo
+        const [playersData, roundData] = await Promise.all([
+          fetchWithRetry<Player[]>(() => 
+            supabase.from('players').select('*').eq('game_id', gameId)
+          ),
+          fetchWithRetry<Round>(() => 
+            supabase.from('rounds').select('*').eq('id', location.state.roundId).single()
+          )
+        ]);
+
+        if (!playersData || !roundData) {
+          throw new Error('No se pudieron cargar los datos del juego');
+        }
+
+        // 2. Obtener la pregunta usando el ID correcto
+        const questionData = roundData.question_id ? 
+          await fetchWithRetry<Question>(() => 
+            supabase.from('questions').select('*').eq('id', roundData.question_id).single()
+          ) : null;
+
+        // 3. Obtener respuestas
+        const answersData = await fetchWithRetry<Answer[]>(() => 
+          supabase.from('answers').select('*').eq('round_id', roundData.id)
         );
 
         if (!playersData || playersData.length === 0) {
@@ -316,17 +323,6 @@ export const GameRound = (): JSX.Element => {
         setCurrentPlayer(currentPlayerData);
 
         // 3. Obtener la ronda activa
-        const roundData = await fetchWithRetry<Round>(
-          async () => await supabase
-            .from('rounds')
-            .select('*')
-            .eq('id', location.state.roundId)
-            .single()
-            .then(),
-          maxRetries,
-          retryDelay
-        );
-
         if (!roundData) {
           throw new Error('No se encontró la ronda');
         }
@@ -341,40 +337,10 @@ export const GameRound = (): JSX.Element => {
         setModerator(moderatorData);
 
         // 5. Obtener pregunta si existe
-        if (roundData.question_id) {
-          const questionData = await fetchWithRetry<Question>(
-            async () => await supabase
-              .from('questions')
-              .select('*')
-              .eq('id', roundData.question_id)
-              .single()
-              .then(),
-            maxRetries,
-            retryDelay
-          );
-
-          if (questionData) {
-            setQuestion(questionData);
-            setCountdown(0);
-          }
+        if (questionData) {
+          setQuestion(questionData);
+          setCountdown(0);
         }
-
-        const answersData = await fetchWithRetry<Answer[]>(
-          async () => await supabase
-            .from('answers')
-            .select(`
-              content,
-              player_id,
-              players (
-                name,
-                avatar_color
-              )
-            `)
-            .eq('round_id', roundData.id)
-            .then(),
-          maxRetries,
-          retryDelay
-        );
 
         const initialAnswers = answersData || [];
         setAnswers(initialAnswers);
@@ -399,9 +365,6 @@ export const GameRound = (): JSX.Element => {
                 .select('*')
                 .eq('id', updatedRound.question_id)
                 .single()
-                .then(),
-              maxRetries,
-              retryDelay
             );
 
             if (questionData) {

@@ -148,40 +148,53 @@ export const GameLobby = (): JSX.Element => {
     setIsStartingGame(true);
     
     try {
-      // 1. Obtener una pregunta aleatoria de la categoría 'pelicula'
-      const { data: question, error: questionError } = await supabase
+      // 1. Obtener todas las preguntas disponibles
+      const { data: availableQuestions } = await supabase
         .from('questions')
         .select('id')
-        .eq('category', 'pelicula')
-        .limit(1)
-        .single();
+        .eq('category', 'pelicula');
 
-      if (questionError) throw questionError;
-      if (!question) throw new Error('No se encontró ninguna pregunta');
+      if (!availableQuestions || availableQuestions.length === 0) {
+        throw new Error('No hay preguntas disponibles');
+      }
 
-      // 2. Crear la primera ronda con la pregunta
-      const firstModerator = players[0];
-      const { data: newRound, error: roundError } = await supabase
-        .from('rounds')
-        .insert({
+      // 2. Seleccionar 4 preguntas (permitiendo repeticiones si es necesario)
+      const selectedQuestions = [];
+      for (let i = 0; i < 4; i++) {
+        const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+        selectedQuestions.push(availableQuestions[randomIndex]);
+      }
+
+      // 3. Crear las 4 rondas
+      const rounds = [];
+      for (let i = 0; i < 4; i++) {
+        const moderator = players[i % players.length];
+        rounds.push({
           game_id: gameId,
-          number: 1,
-          moderator_id: firstModerator.id,
+          number: i + 1,
+          moderator_id: moderator.id,
           category: 'pelicula',
-          active: true,
-          question_id: question.id  // Añadir el ID de la pregunta
-        })
-        .select()
-        .single();
+          active: i === 0,
+          question_id: selectedQuestions[i].id,
+          voting_phase: false,
+          reading_phase: false,
+          results_phase: false
+        });
+      }
 
-      if (roundError) throw roundError;
+      // 4. Insertar todas las rondas
+      const { error: roundsError } = await supabase
+        .from('rounds')
+        .insert(rounds);
 
-      // 3. Actualizar el estado del juego
+      if (roundsError) throw roundsError;
+
+      // 5. Actualizar el estado del juego
       const { error: gameError } = await supabase
         .from('games')
         .update({ 
           started: true,
-          current_round_id: newRound.id 
+          current_round_id: rounds[0].id 
         })
         .eq('id', gameId);
 
@@ -191,6 +204,33 @@ export const GameLobby = (): JSX.Element => {
       console.error('Error starting game:', err);
       setError('Error al iniciar el juego');
       setIsStartingGame(false);
+    }
+  };
+
+  const checkGameStatus = async () => {
+    try {
+      // En lugar de buscar rondas activas, obtener la ronda más reciente
+      const { data: latestRound } = await supabase
+        .from('rounds')
+        .select('*')
+        .eq('game_id', gameId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestRound) {
+        // Usar la ronda más reciente para determinar el estado del juego
+        navigate(`/game/${gameId}/round`, {
+          state: {
+            roundId: latestRound.id,
+            roundNumber: latestRound.number,
+            moderatorId: latestRound.moderator_id,
+            playerName: location.state?.playerName
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error checking game status:', error);
     }
   };
 

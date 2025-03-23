@@ -1,5 +1,5 @@
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import type { Player } from "../../lib/types";
 
@@ -20,9 +20,10 @@ export const GameScores = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>([]);
   const roundNumber = location.state?.roundNumber;
-  const [countdown, setCountdown] = useState<number>(20);
+  const [countdown, setCountdown] = useState(10);
   const navigate = useNavigate();
 
+  // Calcular puntuaciones
   useEffect(() => {
     const calculateScores = async () => {
       try {
@@ -80,7 +81,7 @@ export const GameScores = () => {
     calculateScores();
   }, [gameId, location.state?.roundId]);
 
-  // Timer para la siguiente ronda
+  // Timer para la navegación
   useEffect(() => {
     if (countdown > 0) {
       const timer = setInterval(() => {
@@ -91,142 +92,61 @@ export const GameScores = () => {
     }
 
     if (countdown === 0) {
-      const transitionToNextRound = async () => {
+      const navigateToNextRound = async () => {
         try {
-          console.log('🔄 Iniciando transición a siguiente ronda');
-          console.log('Estado actual:', {
-            gameId,
-            roundNumber,
-            currentRoundId: location.state?.roundId
+          console.log('⏱️ Timer completado, buscando siguiente ronda...', {
+            currentRound: roundNumber,
+            gameId
           });
 
-          // 1. Primero, desactivar la ronda actual
-          console.log('📝 Desactivando ronda actual');
-          await supabase
+          // Obtener la siguiente ronda
+          const { data: nextRound, error } = await supabase
             .from('rounds')
-            .update({ active: false })
-            .eq('id', location.state?.roundId);
-
-          // 2. Verificar que no haya rondas activas (debería ser false ahora)
-          const { data: activeRound } = await supabase
-            .from('rounds')
-            .select('*')
-            .eq('game_id', gameId)
-            .eq('active', true)
-            .single();
-
-          console.log('🔍 Verificación de ronda activa:', activeRound);
-
-          // 3. Obtener jugadores
-          const { data: players } = await supabase
-            .from('players')
-            .select('*')
-            .eq('game_id', gameId)
-            .order('created_at', { ascending: true });
-
-          console.log('👥 Jugadores obtenidos:', players);
-
-          if (!players) return;
-
-          const currentModeratorIndex = players.findIndex(p => p.id === location.state?.moderatorId);
-          const nextModeratorIndex = (currentModeratorIndex + 1) % players.length;
-          const nextModerator = players[nextModeratorIndex];
-
-          console.log('👤 Siguiente moderador:', {
-            current: location.state?.moderatorId,
-            next: nextModerator.id
-          });
-
-          // Obtener pregunta
-          const { data: question } = await supabase
-            .from('questions')
-            .select('id')
-            .eq('category', 'pelicula')
-            .limit(1)
-            .single();
-
-          console.log('❓ Pregunta seleccionada:', question);
-
-          // Crear nueva ronda
-          console.log('📝 Creando nueva ronda con:', {
-            number: roundNumber + 1,
-            moderator: nextModerator.id,
-            question: question?.id
-          });
-
-          const { data: newRound, error: createError } = await supabase
-            .from('rounds')
-            .insert({
-              game_id: gameId,
-              number: roundNumber + 1,
-              moderator_id: nextModerator.id,
-              category: 'pelicula',
-              active: true,
-              question_id: question?.id,
-              voting_phase: false,
-              reading_phase: false,
-              results_phase: false
-            })
             .select()
+            .eq('game_id', gameId)
+            .eq('number', roundNumber + 1)
+            .limit(1)  // Asegurarnos de obtener solo una ronda
             .single();
 
-          console.log('✅ Nueva ronda creada:', newRound);
-          console.log('❌ Error al crear ronda:', createError);
+          if (error) {
+            console.error('Error obteniendo siguiente ronda:', error);
+            throw error;
+          }
 
-          if (createError) throw createError;
-          if (!newRound) throw new Error('No se pudo crear la nueva ronda');
+          if (!nextRound) {
+            console.log('🏁 Juego terminado - No hay más rondas');
+            // TODO: Navegar a pantalla de fin de juego
+            return;
+          }
 
-          console.log('🚀 Navegando a siguiente ronda con:', {
-            roundNumber: roundNumber + 1,
-            roundId: newRound.id,
-            moderatorId: nextModerator.id
+          console.log('✅ Siguiente ronda encontrada:', {
+            roundId: nextRound.id,
+            number: nextRound.number,
+            moderator: nextRound.moderator_id,
+            phase: nextRound.reading_phase ? 'reading' : nextRound.voting_phase ? 'voting' : 'initial'
           });
 
-          navigate(`/game/${gameId}/next-round`, {
+          // Navegar a la siguiente ronda
+          navigate(`/game/${gameId}/round`, {
             state: { 
               playerName: location.state?.playerName,
-              roundNumber: roundNumber + 1,
-              roundId: newRound.id,
-              moderatorId: nextModerator.id,
-              category: 'pelicula'
+              roundNumber: nextRound.number,
+              roundId: nextRound.id,
+              moderatorId: nextRound.moderator_id,
+              category: nextRound.category,
+              phase: 'reading'
             }
           });
 
         } catch (err) {
-          console.error('❌ Error en transición:', err);
-          // Intentar obtener la ronda activa
-          try {
-            const { data: activeRound } = await supabase
-              .from('rounds')
-              .select('*')
-              .eq('game_id', gameId)
-              .eq('active', true)
-              .single();
-
-            navigate(`/game/${gameId}/next-round`, {
-              state: { 
-                playerName: location.state?.playerName,
-                roundNumber: roundNumber + 1,
-                roundId: activeRound?.id,
-                moderatorId: activeRound?.moderator_id,
-                category: activeRound?.category
-              }
-            });
-          } catch (fetchErr) {
-            // Si todo falla, navegar con información mínima
-            navigate(`/game/${gameId}/next-round`, {
-              state: { 
-                playerName: location.state?.playerName,
-                roundNumber: roundNumber + 1
-              }
-            });
-          }
+          console.error('Error navegando a siguiente ronda:', err);
+          navigate(`/game/${gameId}/lobby`);
         }
       };
 
-      transitionToNextRound();
+      navigateToNextRound();
     }
-  }, [countdown, gameId, navigate, location.state, roundNumber]);
+  }, [countdown, gameId, navigate, location.state?.playerName, roundNumber]);
 
   if (isLoading) {
     return (
@@ -294,7 +214,7 @@ export const GameScores = () => {
               <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
-                  style={{ width: `${(countdown / 20) * 100}%` }}
+                  style={{ width: `${(countdown / 10) * 100}%` }}
                 />
               </div>
             </div>

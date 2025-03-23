@@ -1,1 +1,1 @@
-export { GameScores } from './GameScores'; 
+export { GameScores } from './GameScores';
