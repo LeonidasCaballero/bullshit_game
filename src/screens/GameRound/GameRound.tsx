@@ -2,7 +2,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supabase";
+import { supabase, subscribeToAnswers, subscribeToRound, subscribeToVotes } from "../../lib/supabase";
 import { ArrowLeft, Timer, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
@@ -23,10 +23,24 @@ interface ExitingCard {
   content: string;
 }
 
-// Añadir este componente para el overlay
+// Añadir este array de insultos en la parte superior, justo después de las interfaces
+const INSULTOS = [
+  "Eres la razón por la que los espejos tienen traumas.",
+  "Si la fealdad fuera un delito, tendrías cadena perpetua.",
+  "Tu cara hace que los bebés lloren antes de conocerte.",
+  "Eres el motivo por el que las luces se apagan en las fiestas.",
+  "Pareces un experimento de Photoshop que salió mal.",
+  "Tu reflejo en el agua haría huir hasta a los peces.",
+  "Eres la prueba de que la evolución a veces da marcha atrás.",
+  "Si fueras un emoji, serías el que nadie usa.",
+  "Los sustos de Halloween se inspiran en tu foto de perfil.",
+  "Si la belleza está en el interior, ¿has intentado voltearte?",
+];
+
+// Solo el componente ReadingOverlay fuera
 const ReadingOverlay = () => (
   <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
-    <Loader2 className="h-8 w-8 animate-spin text-white mb-4" />
+    <Loader2 className="h-8 h-8 animate-spin text-white mb-4" />
     <p className="text-white text-lg text-center px-4">
       El moderador está leyendo vuestras burradas
     </p>
@@ -63,9 +77,43 @@ export const GameRound = (): JSX.Element => {
   
   const answersChannelRef = useRef<any>(null);
   const roundChannelRef = useRef<any>(null);
+  const votesChannelRef = useRef<any>(null);
 
   const [slideDirection, setSlideDirection] = useState('right');
   const [exitingCards, setExitingCards] = useState<ExitingCard[]>([]);
+
+  const [showInsult, setShowInsult] = useState(false);
+  const [insultoActual, setInsultoActual] = useState("");
+
+  // Modificar el InsultPopup para hacerlo más bonito y añadir el nombre del moderador
+  const InsultPopup = () => (
+    <div className="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 animate-fadeIn">
+      <div className="bg-white rounded-[20px] p-8 mx-4 w-full max-w-[350px] relative shadow-xl animate-scaleIn">
+        <button 
+          onClick={() => setShowInsult(false)}
+          className="absolute top-4 right-4 text-[#131309] hover:text-[#131309]/70 w-8 h-8 flex items-center justify-center rounded-full bg-[#E7E7E6] hover:bg-[#D1D1D0] transition-colors"
+        >
+          ✕
+        </button>
+        
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 bg-[#CB1517] rounded-full flex items-center justify-center mb-4 animate-pulse">
+            <span className="text-white text-3xl">🔥</span>
+          </div>
+          
+          <p className="text-[#131309] text-base mb-4 text-center">
+            Un mensaje de parte de <span className="font-bold">{moderator?.name}</span>, el moderador...
+          </p>
+          
+          <div className="bg-[#131309] rounded-[15px] p-6 w-full">
+            <p className="text-white text-xl font-bold text-center italic">
+              "{insultoActual}"
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const fetchWithRetry = async <T,>(
     fetcher: () => Promise<{ data: T; error: any }>,
@@ -235,16 +283,20 @@ export const GameRound = (): JSX.Element => {
       }
 
       console.log('✅ Voto registrado exitosamente');
+      
+      // Notificar a todos sobre el nuevo voto usando broadcast
+      supabase
+        .channel('votes-broadcast')
+        .send({
+          type: 'broadcast',
+          event: 'new-vote',
+          payload: { roundId: round.id }
+        })
+        .then(() => console.log('📢 Broadcast de nuevo voto enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
+      
       setHasVoted(true);
       setSelectedVote(selectedAnswer);
-
-      // Forzar una actualización inmediata
-      const { data: updatedVotes } = await supabase
-        .from('votes')
-        .select('*')
-        .eq('round_id', round.id);
-      
-      setVotes(updatedVotes || []);
     } catch (err) {
       console.error('Error al votar:', err);
     }
@@ -263,6 +315,19 @@ export const GameRound = (): JSX.Element => {
         .eq('id', round.id);
 
       if (updateError) throw updateError;
+      
+      // Enviar broadcast para notificar a todos los jugadores
+      supabase
+        .channel(`round-updates-${round.id}`)
+        .send({
+          type: 'broadcast',
+          event: 'round-update',
+          payload: { round: { ...round, reading_phase: false, voting_phase: true } }
+        })
+        .then(() => console.log('✅ Broadcast de fase de votación enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
+      
+      setIsReadingAnswers(false);
     } catch (err) {
       console.error('Error transitioning to voting phase:', err);
       setError('Error al iniciar la fase de votación');
@@ -310,24 +375,32 @@ export const GameRound = (): JSX.Element => {
   }, [round, players, answers]);
 
   const handleAnswersUpdate = useCallback((newAnswers: Answer[]) => {
-    console.log('Received new answers:', newAnswers);
+    console.log('🔄 Recibidas nuevas respuestas:', newAnswers.length);
+    
+    // Actualizar el estado de respuestas
     setAnswers(newAnswers);
     
+    // Actualizar si el jugador actual ha respondido
     if (currentPlayer) {
-      setHasAnswered(newAnswers.some(a => a.player_id === currentPlayer.id));
+      const hasPlayerAnswered = newAnswers.some(a => a.player_id === currentPlayer.id);
+      console.log(`👤 ¿${currentPlayer.name} ha respondido?`, hasPlayerAnswered);
+      setHasAnswered(hasPlayerAnswered);
     }
-  }, [currentPlayer]);
+    
+    // Forzar actualización de jugadores pendientes
+    const pending = players.filter(player => 
+      player.id !== round?.moderator_id && 
+      !newAnswers.some(a => a.player_id === player.id)
+    );
+    console.log(`⏳ Jugadores pendientes: ${pending.length}`);
+  }, [currentPlayer, players, round?.moderator_id]);
 
   useEffect(() => {
-    if (!gameId || !location.state?.playerName) {
-      setError('Información de juego o jugador no válida');
-      setIsLoading(false);
-      return;
-    }
-
     const setupGame = async () => {
+      if (!gameId || !location.state?.playerName) return;
+
       try {
-        console.log('🚀 Iniciando setup del juego...');
+        console.log('🎮 Configurando juego inicial...');
         
         // 1. Obtener datos básicos en paralelo
         const [playersData, roundData] = await Promise.all([
@@ -428,16 +501,19 @@ export const GameRound = (): JSX.Element => {
 
         setIsLoading(false);
       } catch (err) {
-        console.error('Error in setupGame:', err);
-        setError(err instanceof Error ? err.message : 'Error al cargar la partida');
-        setIsLoading(false);
+        console.error('Error en setup:', err);
+        setError('Error al cargar la ronda');
+        if (retryCount < maxRetries) {
+          setTimeout(() => setRetryCount(prev => prev + 1), retryDelay);
+        }
       }
     };
 
     setupGame();
 
+    // Limpiar solo cuando el componente se desmonta
     return () => {
-      console.log('Cleaning up subscriptions');
+      console.log('🧹 Limpieza final de suscripciones');
       if (answersChannelRef.current) {
         answersChannelRef.current.unsubscribe();
         answersChannelRef.current = null;
@@ -447,7 +523,7 @@ export const GameRound = (): JSX.Element => {
         roundChannelRef.current = null;
       }
     };
-  }, [gameId, location.state?.playerName, location.state?.roundId, handleAnswersUpdate, retryCount]);
+  }, [gameId, location.state?.playerName]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -465,6 +541,9 @@ export const GameRound = (): JSX.Element => {
     if (!answer.trim() || !round || !currentPlayer || hasAnswered) return;
     
     try {
+      console.log('📤 Enviando respuesta...');
+      
+      // Directamente intentamos insertar la respuesta
       const { error: submitError } = await supabase
         .from('answers')
         .insert([{
@@ -473,62 +552,67 @@ export const GameRound = (): JSX.Element => {
           content: answer.trim()
         }]);
 
-      if (submitError) throw submitError;
+      if (submitError) {
+        // Si ya existe una respuesta, Supabase devolverá un error de duplicado
+        if (submitError.code === '23505') {
+          console.log('⚠️ Ya habías enviado una respuesta anteriormente');
+          setHasAnswered(true);
+          setAnswer('');
+          return;
+        }
+        
+        console.error('❌ Error específico al enviar:', submitError);
+        throw submitError;
+      }
+      
+      console.log('✅ Respuesta enviada correctamente');
+      
+      // Notificar a todos sobre la nueva respuesta usando broadcast
+      supabase
+        .channel('answers-broadcast')
+        .send({
+          type: 'broadcast',
+          event: 'new-answer',
+          payload: { roundId: round.id }
+        })
+        .then(() => console.log('📢 Broadcast de nueva respuesta enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
+      
       setAnswer('');
       setHasAnswered(true);
     } catch (err) {
-      console.error('Error submitting answer:', err);
+      console.error('❌ Error submitting answer:', err);
       setError('Error al enviar la respuesta');
     }
   };
 
   const handleStartReadingAnswers = async () => {
-    if (!question || !round) return;
-
+    if (!round) return;
+    
     try {
-      // Primero actualizar el estado de la ronda
       const { error: updateError } = await supabase
         .from('rounds')
         .update({ reading_phase: true })
         .eq('id', round.id);
 
       if (updateError) throw updateError;
+      
+      // Enviar broadcast para notificar a todos los jugadores
+      supabase
+        .channel(`round-updates-${round.id}`)
+        .send({
+          type: 'broadcast',
+          event: 'round-update',
+          payload: { round: { ...round, reading_phase: true } }
+        })
+        .then(() => console.log('✅ Broadcast de fase de lectura enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
 
-      // Luego obtener las respuestas
-      const { data: answersWithPlayers, error: answersError } = await supabase
-        .from('answers')
-        .select(`
-          content,
-          player_id,
-          players (
-            name,
-            avatar_color
-          )
-        `)
-        .eq('round_id', round.id);
-
-      if (answersError) throw answersError;
-
-      const allAnswers: AnswerOption[] = [
-        {
-          content: question.correct_answer,
-          isCorrectAnswer: true
-        },
-        ...(answersWithPlayers || []).map((answer: any) => ({
-          content: answer.content,
-          isCorrectAnswer: false,
-          playerName: answer.players?.name,
-          playerId: answer.player_id
-        }))
-      ];
-
-      const shuffled = allAnswers.sort(() => Math.random() - 0.5);
-      setShuffledAnswers(shuffled);
       setIsReadingAnswers(true);
-      setCurrentAnswerIndex(0);
+      prepareShuffledAnswers();
     } catch (err) {
-      console.error('Error preparing answers:', err);
-      setError('Error al preparar las respuestas');
+      console.error('Error starting reading phase:', err);
+      setError('Error al iniciar la fase de lectura');
     }
   };
 
@@ -542,122 +626,81 @@ export const GameRound = (): JSX.Element => {
   };
 
   useEffect(() => {
-    if (round?.voting_phase) {
-      console.log('🔄 Iniciando fase de votación');
-      
-      // Función para obtener votos actuales
-      const fetchVotes = async () => {
-        console.log('📥 Fetching votos...');
-        const { data, error } = await supabase
-          .from('votes')
-          .select('*')
-          .eq('round_id', round.id);
+    if (!round?.voting_phase || !round?.id) return;
 
-        if (error) {
-          console.error('❌ Error fetching votes:', error);
-          return;
-        }
-
-        console.log('✅ Votos obtenidos:', data);
-        setVotes(data || []);
-        
-        // Actualizar allPlayersVoted
-        const nonModeratorPlayers = players.filter(p => p.id !== round.moderator_id);
-        const votedPlayers = data?.filter(vote => 
-          nonModeratorPlayers.some(p => p.id === vote.player_id)
-        );
-        setAllPlayersVoted(votedPlayers?.length === nonModeratorPlayers.length);
-      };
-
-      // Fetch inicial
-      fetchVotes();
-
-      // Suscripción a cambios en votos
-      const votesChannel = supabase
-        .channel(`votes-${round.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'votes',
-            filter: `round_id=eq.${round.id}`
-          },
-          async (payload) => {
-            console.log('🎯 Cambio detectado en votos:', payload);
-            await fetchVotes(); // Refetch al detectar cambios
-          }
-        )
-        .subscribe((status) => {
-          console.log('📡 Estado de suscripción:', status);
-        });
-
-      // Cleanup
-      return () => {
-        console.log('♻️ Limpiando suscripción de votos');
-        votesChannel.unsubscribe();
-      };
+    console.log('🔊 Configurando suscripción para votos...');
+    
+    if (votesChannelRef.current) {
+      votesChannelRef.current.unsubscribe();
     }
-  }, [round?.id, round?.voting_phase, round?.moderator_id, players]);
+    
+    votesChannelRef.current = subscribeToVotes(round.id, (newVotes) => {
+      console.log('🔄 Recibidos votos actualizados:', newVotes.length);
+      setVotes(newVotes);
+      
+      // Actualizar si el jugador actual ha votado
+      if (currentPlayer) {
+        const hasPlayerVoted = newVotes.some(v => v.player_id === currentPlayer.id);
+        setHasVoted(hasPlayerVoted);
+      }
+      
+      // Verificar si todos han votado
+      const nonModeratorPlayers = players.filter(p => p.id !== round.moderator_id);
+      const allVoted = nonModeratorPlayers.every(player => 
+        newVotes.some(vote => vote.player_id === player.id)
+      );
+      setAllPlayersVoted(allVoted);
+    });
+    
+    return () => {
+      if (votesChannelRef.current) {
+        votesChannelRef.current.unsubscribe();
+        votesChannelRef.current = null;
+      }
+    };
+  }, [round?.id, round?.voting_phase, players, currentPlayer]);
 
   const handleRevealResults = async () => {
-    if (!round || !question) return;
+    if (!round) return;
     
     try {
-      // 1. Asignar puntos por votos correctos (2 puntos)
-      const correctVoters = votes.filter(vote => vote.selected_answer === question.correct_answer);
-      await Promise.all(correctVoters.map(vote => 
-        supabase.from('scores').insert({
-          game_id: gameId,
-          round_id: round.id,
-          player_id: vote.player_id,
-          points: 2,
-          reason: 'Voto correcto'
-        })
-      ));
-
-      // 2. Asignar puntos por recibir votos (1 punto por voto)
-      const playerAnswers = answers.reduce((acc, answer) => {
-        acc[answer.content] = answer.player_id;
-        return acc;
-      }, {} as Record<string, string>);
-
-      const votesByAnswer = votes.reduce((acc, vote) => {
-        if (vote.selected_answer !== question.correct_answer) {
-          acc[vote.selected_answer] = (acc[vote.selected_answer] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
-
-      await Promise.all(
-        Object.entries(votesByAnswer).map(([answer, voteCount]) => {
-          const authorId = playerAnswers[answer];
-          if (authorId) {
-            return supabase.from('scores').insert({
-              game_id: gameId,
-              round_id: round.id,
-              player_id: authorId,
-              points: voteCount,
-              reason: 'Votos recibidos'
-            });
-          }
-        })
-      );
-
-      // 3. Actualizar fase
+      console.log('🏆 Revelando resultados...');
+      
+      // Actualizar la base de datos correctamente
       const { error: updateError } = await supabase
         .from('rounds')
         .update({ 
-          voting_phase: false,
-          reading_phase: false,
-          results_phase: true
+          results_phase: true,
+          voting_phase: false  // Desactivar fase de votación
         })
         .eq('id', round.id);
 
       if (updateError) throw updateError;
+      
+      // Actualizar el objeto round con los cambios correctos
+      const updatedRound = {
+        ...round, 
+        results_phase: true,
+        voting_phase: false
+      };
+      
+      // Enviar broadcast con el estado correcto
+      supabase
+        .channel(`round-updates-${round.id}`)
+        .send({
+          type: 'broadcast',
+          event: 'round-update',
+          payload: { round: updatedRound }
+        })
+        .then(() => console.log('✅ Broadcast de fase de resultados enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
+      
+      // Actualizar el estado local
+      setRound(updatedRound);
+      setResultsCountdown(20);
     } catch (err) {
-      console.error('Error transitioning to results phase:', err);
-      setError('Error al mostrar los resultados');
+      console.error('Error revealing results:', err);
+      setError('Error al revelar resultados');
     }
   };
 
@@ -686,32 +729,269 @@ export const GameRound = (): JSX.Element => {
   useEffect(() => {
     if (!gameId || !round?.id) return;
 
-    const roundChannel = supabase
-      .channel(`round-${round.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rounds',
-          filter: `id=eq.${round.id}`
-        },
-        (payload) => {
-          const updatedRound = payload.new as Round;
-          setRound(updatedRound);
-          // Actualizar isReadingAnswers cuando el moderador inicia la lectura
-          if (updatedRound.reading_phase) {
-            setIsReadingAnswers(true);
-          }
-        }
-      )
-      .subscribe();
+    console.log('🔊 Configurando canal de broadcast para insultos...');
+    
+    const insultoChannel = supabase
+      .channel('insulto-broadcast')
+      .on('broadcast', { event: 'insulto' }, (payload) => {
+        console.log('📢 Recibido insulto por broadcast:', payload);
+        // Seleccionar un insulto aleatorio
+        const insultoRandom = INSULTOS[Math.floor(Math.random() * INSULTOS.length)];
+        setInsultoActual(insultoRandom);
+        setShowInsult(true);
+      })
+      .subscribe((status) => {
+        console.log(`📡 Estado de suscripción a insultos: ${status}`);
+      });
 
     return () => {
-      roundChannel.unsubscribe();
+      console.log('🧹 Limpiando canal de broadcast de insultos');
+      insultoChannel.unsubscribe();
     };
   }, [gameId, round?.id]);
 
+  // Añadir este useEffect para debuggear
+  useEffect(() => {
+    console.log('💫 Estado showInsult actualizado:', showInsult);
+  }, [showInsult]);
+
+  // Añadir esta función para preparar las respuestas mezcladas
+  const prepareShuffledAnswers = async () => {
+    if (!question || !round) return;
+    
+    try {
+      // Obtener las respuestas con datos de jugadores
+      const { data: answersWithPlayers, error: answersError } = await supabase
+        .from('answers')
+        .select(`
+          content,
+          player_id,
+          players (
+            name,
+            avatar_color
+          )
+        `)
+        .eq('round_id', round.id);
+
+      if (answersError) throw answersError;
+
+      // Combinar respuesta correcta con respuestas de jugadores
+      const allAnswers: AnswerOption[] = [
+        {
+          content: question.correct_answer,
+          isCorrectAnswer: true
+        },
+        ...(answersWithPlayers || []).map((answer: any) => ({
+          content: answer.content,
+          isCorrectAnswer: false,
+          playerName: answer.players?.name,
+          playerId: answer.player_id
+        }))
+      ];
+
+      // Mezclar aleatoriamente
+      const shuffled = allAnswers.sort(() => Math.random() - 0.5);
+      setShuffledAnswers(shuffled);
+      setCurrentAnswerIndex(0);
+    } catch (err) {
+      console.error('Error preparando respuestas:', err);
+      setError('Error al preparar las respuestas');
+    }
+  };
+
+  // Añadir un nuevo useEffect para las actualizaciones de ronda
+  useEffect(() => {
+    if (!gameId || !round?.id) return;
+
+    console.log('🔄 Configurando canal de actualizaciones de ronda:', round.id);
+    
+    const roundBroadcast = supabase
+      .channel(`round-updates-${round.id}`)
+      .on('broadcast', { event: 'round-update' }, (payload) => {
+        console.log('📢 Actualización de ronda recibida:', payload);
+        const updatedRound = payload.payload.round as Round;
+        
+        // Actualizar el estado round
+        setRound(updatedRound);
+        
+        // Usar condiciones mutuamente excluyentes
+        if (updatedRound.reading_phase) {
+          console.log('🎭 Fase de lectura activada');
+          setIsReadingAnswers(true);
+        }
+        else if (updatedRound.voting_phase) {
+          console.log('🗳️ Fase de votación activada');
+          setIsReadingAnswers(false);
+        }
+        else if (updatedRound.results_phase) {
+          console.log('🏆 Fase de resultados activada');
+          setResultsCountdown(20);
+        }
+      })
+      .subscribe((status) => {
+        console.log(`📡 Estado de suscripción a actualizaciones de ronda: ${status}`);
+      });
+
+    return () => {
+      console.log('🧹 Limpiando suscripción a actualizaciones de ronda');
+      roundBroadcast.unsubscribe();
+    };
+  }, [gameId, round?.id]);
+
+  // Primero necesitamos una función para calcular los puntos
+  const calculateScores = useCallback(() => {
+    if (!question || !votes || !answers) return {};
+    
+    // Objeto para almacenar los puntos por jugador
+    const scores: Record<string, {points: number, details: string[], playerAnswer: string | null}> = {};
+    
+    // Inicializar puntuaciones para todos los jugadores
+    players.forEach(player => {
+      const playerAnswer = answers.find(a => a.player_id === player.id)?.content || null;
+      scores[player.id] = {points: 0, details: [], playerAnswer};
+    });
+    
+    // 1. Puntos por votos correctos (2 puntos)
+    votes.forEach(vote => {
+      if (vote.selected_answer === question.correct_answer) {
+        scores[vote.player_id].points += 2;
+        scores[vote.player_id].details.push('✅ +2pts por votar la respuesta correcta');
+      }
+    });
+    
+    // 2. Puntos por votos recibidos (1 punto por voto)
+    const playerAnswers = answers.reduce((acc, answer) => {
+      acc[answer.content] = answer.player_id;
+      return acc;
+    }, {} as Record<string, string>);
+    
+    votes.forEach(vote => {
+      if (vote.selected_answer !== question.correct_answer) {
+        const authorId = playerAnswers[vote.selected_answer];
+        if (authorId) {
+          scores[authorId].points += 1;
+          scores[authorId].details.push(`🎯 +1pt por engañar a ${players.find(p => p.id === vote.player_id)?.name || 'alguien'}`);
+        }
+      }
+    });
+    
+    return scores;
+  }, [question, votes, answers, players]);
+
+  // Añadir esta función para obtener las puntuaciones totales
+  const fetchTotalScores = useCallback(async () => {
+    if (!gameId || !players.length) return;
+    
+    try {
+      console.log('📊 Obteniendo puntuaciones totales...');
+      
+      // Obtener todas las puntuaciones del juego
+      const { data: scoresData, error: scoresError } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('game_id', gameId);
+        
+      if (scoresError) throw scoresError;
+      
+      // Calcular total por jugador
+      const totalScores: Record<string, number> = {};
+      
+      // Inicializar todos los jugadores con 0 puntos
+      players.forEach(player => {
+        totalScores[player.id] = 0;
+      });
+      
+      // Sumar los puntos de todas las rondas
+      scoresData?.forEach(score => {
+        totalScores[score.player_id] = (totalScores[score.player_id] || 0) + score.points;
+      });
+      
+      console.log('✅ Puntuaciones totales calculadas:', totalScores);
+      return totalScores;
+    } catch (err) {
+      console.error('❌ Error obteniendo puntuaciones:', err);
+      setError('Error al obtener puntuaciones');
+      return {};
+    }
+  }, [gameId, players]);
+
+  // Usar este useEffect para guardar los puntos de la ronda actual
+  useEffect(() => {
+    if (!round?.results_phase || !question || !votes || !answers || !gameId) return;
+    
+    const saveScores = async () => {
+      try {
+        console.log('💾 Guardando puntuaciones de la ronda...');
+        
+        // Calcular las puntuaciones de esta ronda
+        const scores = calculateScores();
+        
+        // 1. Puntos por votos correctos (2 puntos)
+        const correctVoters = votes.filter(vote => vote.selected_answer === question.correct_answer);
+        await Promise.all(correctVoters.map(vote => 
+          supabase.from('scores').insert({
+            game_id: gameId,
+            round_id: round.id,
+            player_id: vote.player_id,
+            points: 2,
+            reason: 'Voto correcto'
+          })
+        ));
+
+        // 2. Puntos por recibir votos (1 punto por voto)
+        const playerAnswers = answers.reduce((acc, answer) => {
+          acc[answer.content] = answer.player_id;
+          return acc;
+        }, {} as Record<string, string>);
+
+        const votesByAnswer = votes.reduce((acc, vote) => {
+          if (vote.selected_answer !== question.correct_answer) {
+            acc[vote.selected_answer] = (acc[vote.selected_answer] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>);
+
+        await Promise.all(
+          Object.entries(votesByAnswer).map(([answer, voteCount]) => {
+            const authorId = playerAnswers[answer];
+            if (authorId) {
+              return supabase.from('scores').insert({
+                game_id: gameId,
+                round_id: round.id,
+                player_id: authorId,
+                points: voteCount,
+                reason: 'Votos recibidos'
+              });
+            }
+          })
+        );
+        
+        console.log('✅ Puntuaciones guardadas correctamente');
+      } catch (err) {
+        console.error('❌ Error guardando puntuaciones:', err);
+      }
+    };
+    
+    saveScores();
+  }, [round?.results_phase, gameId, round?.id, question, votes, answers, calculateScores]);
+
+  // 1. Añadir el estado para totalScores
+  const [totalScores, setTotalScores] = useState<Record<string, number>>({});
+
+  // 2. Añadir useEffect para cargar puntuaciones totales
+  useEffect(() => {
+    if (round?.results_phase) {
+      fetchTotalScores().then(scores => {
+        if (scores) {
+          console.log('📊 Puntuaciones totales cargadas:', scores);
+          setTotalScores(scores);
+        }
+      });
+    }
+  }, [round?.results_phase, fetchTotalScores]);
+
+  // Modificar para manejar correctamente la promesa de fetchTotalScores
+  // Añadir estado para almacenar las puntuaciones totales
   if (isLoading) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen px-6">
@@ -846,7 +1126,7 @@ export const GameRound = (): JSX.Element => {
           RONDA {round.number}
         </p>
 
-        <div className="w-full max-w-[375px] mt-8">
+        <div className="w-full max-w-md px-4 mt-8 mb-28">
           {question && (
             <div className="space-y-4">
               <div className="bg-[#131309] rounded-[20px] p-6">
@@ -945,6 +1225,8 @@ export const GameRound = (): JSX.Element => {
   }
 
   if (round?.results_phase) {
+    const totalScores = fetchTotalScores();
+
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
@@ -955,109 +1237,123 @@ export const GameRound = (): JSX.Element => {
           RONDA {round.number}
         </p>
 
-        <div className="w-full max-w-[375px] mt-8">
-          {question && (
-            <div className="space-y-4">
-              <div className="bg-[#131309] rounded-[20px] p-6">
-                <p className="text-white text-xl text-center">
-                  {question.text}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] p-4">
-                <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
-                  {question.content}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-white rounded-[10px] p-6">
-            <p className="text-[#131309] text-xl font-bold text-center mb-6">
-              Resultados de la votación
+        <div className="w-full max-w-md px-4 mt-8 mb-28">
+          <div className="bg-[#131309] rounded-[20px] p-6 mb-4">
+            <h2 className="text-white text-xl font-bold text-center mb-2">
+              Resultados
+            </h2>
+            <p className="text-white text-center">
+              {question?.text}: <span className="font-bold">{question?.correct_answer}</span>
             </p>
-            
-            <div className="space-y-4">
-              {shuffledAnswers.map((answer, index) => {
-                const isCorrectAnswer = answer.isCorrectAnswer;
-                const isOwnAnswer = answer.playerId === currentPlayer?.id;
-                const votesForThisAnswer = votes.filter(
-                  vote => vote.selected_answer === answer.content
-                ).length;
-                const answerPlayer = players.find(p => p.id === answer.playerId);
-
+          </div>
+          
+          <div className="space-y-4">
+            {Object.entries(calculateScores())
+              .sort(([playerIdA, scoreA], [playerIdB, scoreB]) => {
+                // Si uno de ellos es el moderador, ponerlo al final
+                if (playerIdA === round?.moderator_id) return 1;
+                if (playerIdB === round?.moderator_id) return -1;
+                
+                // De lo contrario, ordenar por puntos (mayor a menor)
+                return scoreB.points - scoreA.points;
+              })
+              .map(([playerId, {points, details, playerAnswer}]) => {
+                const player = players.find(p => p.id === playerId);
+                if (!player) return null;
+                
+                const isPlayerModerator = player.id === round?.moderator_id;
+                const isCurrentPlayer = player.id === currentPlayer?.id;
+                const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
+                const isCorrectVote = playerVote === question?.correct_answer;
+                const totalPoints = totalScores[playerId] || 0;
+                
+                // Determinar el estilo de borde para el jugador actual
+                let borderStyle = '';
+                if (isCurrentPlayer && !isPlayerModerator) {
+                  borderStyle = isCorrectVote ? 'border-2 border-[#9FFF00]' : 'border-2 border-[#CB1517]';
+                }
+                
                 return (
                   <div 
-                    key={index}
-                    className={`w-full p-4 rounded-[10px] border ${
-                      isCorrectAnswer 
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-[#E7E7E6]'
+                    key={playerId} 
+                    className={`rounded-[20px] p-4 shadow-md ${
+                      isPlayerModerator 
+                        ? 'bg-[#F0F0E8] border-2 border-[#131309]' 
+                        : isCurrentPlayer 
+                          ? `bg-white ${borderStyle}` 
+                          : 'bg-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold">
-                          Opción {index + 1}
-                        </span>
-                        {isCorrectAnswer && (
-                          <span className="text-[#9FFF00] bg-[#131309] px-3 py-1 rounded-full text-sm font-bold">
-                            Respuesta real
-                          </span>
-                        )}
+                    <div className="flex items-center gap-3 mb-2">
+                      <div 
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${isPlayerModerator ? 'ring-2 ring-[#131309]' : ''}`}
+                        style={{ backgroundColor: player.avatar_color }}
+                      >
+                        {player.name.charAt(0).toUpperCase()}
                       </div>
-                      {isOwnAnswer && (
-                        <span className="text-sm text-[#CB1517]">
-                          Tu respuesta
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-lg font-['Londrina_Solid']" style={{ fontFamily: 'cursive' }}>
-                      {answer.content}
-                    </p>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {!isCorrectAnswer && answerPlayer && (
-                          <>
-                            <div 
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                              style={{ backgroundColor: answerPlayer.avatar_color }}
-                            >
-                              {answerPlayer.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-sm text-gray-600">
-                              {answerPlayer.name}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold">{player.name}</p>
+                          {isPlayerModerator && (
+                            <span className="bg-[#131309] text-white text-xs px-2 py-1 rounded-full">
+                              Moderador
                             </span>
-                          </>
+                          )}
+                          {isCurrentPlayer && (
+                            <span className="bg-[#E7E7E6] text-[#131309] text-xs px-2 py-1 rounded-full">
+                              Tú
+                            </span>
+                          )}
+                        </div>
+                        {!isPlayerModerator && (
+                          <p className="text-sm">{isCorrectVote ? '✅ Votó correctamente' : '❌ Engañado'}</p>
                         )}
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {votesForThisAnswer} {votesForThisAnswer === 1 ? 'voto' : 'votos'}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <div className="bg-[#9FFF00] px-3 py-1 rounded-full font-bold">
+                          +{points} pts
+                        </div>
+                        <div className="text-sm mt-1">
+                          Total: {totalPoints + points} pts
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* Mostrar la respuesta del jugador (excepto para el moderador) */}
+                    {playerAnswer && !isPlayerModerator && (
+                      <div className="bg-gray-100 p-3 rounded-lg mb-2 mt-1">
+                        <p className="text-sm text-gray-700 font-medium mb-1">Su respuesta:</p>
+                        <p className="text-sm font-italic">"{playerAnswer}"</p>
+                      </div>
+                    )}
+                    
+                    {details.length > 0 && (
+                      <div className="text-sm space-y-1">
+                        {details.map((detail, i) => (
+                          <p key={i}>{detail}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
-            </div>
           </div>
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0">
-          <div className="bg-white w-full px-6 pt-5 pb-8">
-            <div className="max-w-[327px] mx-auto">
-              <div className="flex flex-col items-center">
-                <span className="text-xl font-bold mb-4">{resultsCountdown}s</span>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
-                    style={{ width: `${(resultsCountdown / 20) * 100}%` }}
-                  />
+          
+          {resultsCountdown > 0 && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white p-4">
+              <div className="max-w-[327px] mx-auto">
+                <div className="flex flex-col items-center">
+                  <span className="text-xl font-bold mb-4">{resultsCountdown}s</span>
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
+                      style={{ width: `${(resultsCountdown / 20) * 100}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -1086,7 +1382,7 @@ export const GameRound = (): JSX.Element => {
         {/* Solo mostrar las cards si es moderador y está en fase de lectura */}
         {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
           <>
-            <div className="w-full max-w-[375px] mt-8">
+            <div className="w-full max-w-[375px] mt-8 mb-28">
               <div className="text-center mb-6">
                 <p className="text-[#131309] text-lg font-bold">
                   {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
@@ -1192,7 +1488,7 @@ export const GameRound = (): JSX.Element => {
 
             <div className="bg-white rounded-[20px] p-4">
               <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
-                {question?.content}
+                {question.content}
               </p>
             </div>
           </div>
@@ -1213,7 +1509,7 @@ export const GameRound = (): JSX.Element => {
 
       {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
         <>
-          <div className="w-full max-w-[375px] mt-8">
+          <div className="w-full max-w-[375px] mt-8 mb-28">
             <div className="text-center mb-6">
               <p className="text-[#131309] text-lg font-bold">
                 {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
@@ -1436,6 +1732,24 @@ export const GameRound = (): JSX.Element => {
                     <div className="max-w-[327px] mx-auto flex flex-col items-center">
                       {pendingPlayers.length > 0 ? (
                         <>
+                          <Button
+                            className="w-full h-12 bg-[#131309] hover:bg-[#000000] text-white rounded-[10px] font-bold text-base mb-6"
+                            onClick={async () => {
+                              console.log('🤬 Enviando insulto gratuito por broadcast...');
+                              // Enviar broadcast en lugar de actualizar la DB
+                              supabase
+                                .channel('insulto-broadcast')
+                                .send({
+                                  type: 'broadcast',
+                                  event: 'insulto',
+                                  payload: { roundId: round.id }
+                                })
+                                .then(() => console.log('✅ Broadcast enviado correctamente'))
+                                .catch(err => console.error('❌ Error enviando broadcast:', err));
+                            }}
+                          >
+                            Insulto gratuito
+                          </Button>
                           <Timer className="w-8 h-8 text-[#131309] mb-2" />
                           <p className="text-[#131309] text-xl font-bold mb-1">
                             Esperando las respuestas
@@ -1481,6 +1795,11 @@ export const GameRound = (): JSX.Element => {
             </>
           )}
         </>
+      )}
+
+      {!isModerator && showInsult && (
+        console.log('🎭 Intentando renderizar popup...'),
+        <InsultPopup />
       )}
     </div>
   );

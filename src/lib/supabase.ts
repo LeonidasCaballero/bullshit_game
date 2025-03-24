@@ -31,53 +31,44 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Create a realtime subscription for answers
-export const subscribeToAnswers = (roundId: string, onUpdate: (answers: any[]) => void) => {
-  const channel = supabase.channel(`answers-${roundId}`, {
-    config: {
-      broadcast: { self: true },
-      presence: { key: roundId }
-    }
-  });
+export const subscribeToAnswers = (roundId: string, callback: (answers: Answer[]) => void) => {
+  console.log(`📝 Configurando suscripción a respuestas para ronda ${roundId}`);
 
-  // Subscribe to all answer changes
-  channel
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'answers',
-        filter: `round_id=eq.${roundId}`
-      },
-      async (payload) => {
-        console.log('New answer received:', payload);
-        try {
-          const { data, error } = await supabase
-            .from('answers')
-            .select('*')
-            .eq('round_id', roundId);
-          
-          if (error) {
-            console.error('Error fetching answers:', error);
-            return;
-          }
-          
-          if (data) {
-            onUpdate(data);
-          }
-        } catch (err) {
-          console.error('Error in answers subscription handler:', err);
-        }
-      }
-    )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log(`Subscribed to answers for round ${roundId}`);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error(`Error subscribing to answers for round ${roundId}`);
+  // Obtener todas las respuestas iniciales
+  supabase
+    .from('answers')
+    .select('*')
+    .eq('round_id', roundId)
+    .then(({ data }) => {
+      console.log(`📊 Cargando respuestas iniciales: ${data?.length || 0}`);
+      if (data) {
+        callback(data);
       }
     });
 
+  // Canal dedicado de broadcast para respuestas
+  const channel = supabase
+    .channel(`answers-broadcast`)
+    .on('broadcast', { event: 'new-answer' }, () => {
+      console.log('📣 Notificación de nueva respuesta recibida');
+      
+      // Refrescar todas las respuestas
+      supabase
+        .from('answers')
+        .select('*')
+        .eq('round_id', roundId)
+        .then(({ data }) => {
+          console.log(`📊 Total de respuestas actualizadas: ${data?.length || 0}`);
+          if (data) {
+            callback(data);
+          }
+        });
+    })
+    .subscribe((status) => {
+      console.log(`🔄 Estado de suscripción a respuestas: ${status}`);
+    });
+
+  console.log(`✅ Suscrito a respuestas para ronda ${roundId}`);
   return channel;
 };
 
@@ -104,51 +95,44 @@ export const subscribeToRound = (roundId: string, onUpdate: (round: Round) => vo
 };
 
 // Create a subscription for votes
-export const subscribeToVotes = (roundId: string, onUpdate: (votes: any[]) => void) => {
-  const channel = supabase.channel(`votes-${roundId}`, {
-    config: {
-      broadcast: { self: true },
-      presence: { key: roundId }
-    }
-  });
+export const subscribeToVotes = (roundId: string, callback: (votes: Vote[]) => void) => {
+  console.log(`📝 Configurando suscripción a votos para ronda ${roundId}`);
 
-  channel
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'votes',
-        filter: `round_id=eq.${roundId}`
-      },
-      async () => {
-        try {
-          const { data, error } = await supabase
-            .from('votes')
-            .select('*')
-            .eq('round_id', roundId);
-          
-          if (error) {
-            console.error('Error fetching votes:', error);
-            return;
-          }
-          
-          if (data) {
-            onUpdate(data);
-          }
-        } catch (err) {
-          console.error('Error in votes subscription handler:', err);
-        }
-      }
-    )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log(`Subscribed to votes for round ${roundId}`);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error(`Error subscribing to votes for round ${roundId}`);
+  // Obtener todos los votos iniciales
+  supabase
+    .from('votes')
+    .select('*')
+    .eq('round_id', roundId)
+    .then(({ data }) => {
+      console.log(`📊 Cargando votos iniciales: ${data?.length || 0}`);
+      if (data) {
+        callback(data);
       }
     });
 
+  // Canal dedicado de broadcast para votos
+  const channel = supabase
+    .channel(`votes-broadcast`)
+    .on('broadcast', { event: 'new-vote' }, () => {
+      console.log('📣 Notificación de nuevo voto recibida');
+      
+      // Refrescar todos los votos
+      supabase
+        .from('votes')
+        .select('*')
+        .eq('round_id', roundId)
+        .then(({ data }) => {
+          console.log(`📊 Total de votos actualizados: ${data?.length || 0}`);
+          if (data) {
+            callback(data);
+          }
+        });
+    })
+    .subscribe((status) => {
+      console.log(`🔄 Estado de suscripción a votos: ${status}`);
+    });
+
+  console.log(`✅ Suscrito a votos para ronda ${roundId}`);
   return channel;
 };
 
