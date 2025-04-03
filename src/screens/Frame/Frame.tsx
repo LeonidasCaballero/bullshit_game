@@ -4,9 +4,11 @@ import { Input } from "../../components/ui/input";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
 
 export const Frame = (): JSX.Element => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [gameName, setGameName] = useState("");
   const [error, setError] = useState("");
 
@@ -42,9 +44,20 @@ export const Frame = (): JSX.Element => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
   return (
     <div className="bg-[#E7E7E6] flex justify-center w-full min-h-screen">
-      <div className="w-full max-w-[375px] h-[812px] flex flex-col items-center">
+      <div className="w-full max-w-[375px] h-[812px] flex flex-col items-center relative">
+        <button 
+          onClick={handleSignOut}
+          className="absolute top-4 right-4 text-sm text-[#131309] hover:underline"
+        >
+          Cerrar sesión
+        </button>
         <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
           BULLSHIT
         </h1>

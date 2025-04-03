@@ -142,15 +142,15 @@ export const GameRound = (): JSX.Element => {
             fetchWithRetry<AnswerResponse[]>(
               async () => {
                 const response = await supabase
-                  .from('answers')
-                  .select(`
-                    content,
-                    player_id,
-                    players (
-                      name,
-                      avatar_color
-                    )
-                  `)
+                .from('answers')
+                .select(`
+                  content,
+                  player_id,
+                  players (
+                    name,
+                    avatar_color
+                  )
+                `)
                   .eq('round_id', round.id);
                 return { data: response.data as AnswerResponse[], error: response.error };
               }
@@ -342,7 +342,7 @@ export const GameRound = (): JSX.Element => {
       }]);
       setSlideDirection('left');
       setTimeout(() => {
-        setCurrentAnswerIndex(prev => prev + 1);
+      setCurrentAnswerIndex(prev => prev + 1);
         setExitingCards([]);
       }, 400);
     } else {
@@ -461,9 +461,9 @@ export const GameRound = (): JSX.Element => {
         setModerator(moderatorData);
 
         // 5. Obtener pregunta si existe
-        if (questionData) {
-          setQuestion(questionData);
-          setCountdown(0);
+          if (questionData) {
+            setQuestion(questionData);
+            setCountdown(0);
         }
 
         const initialAnswers = answersData || [];
@@ -758,7 +758,7 @@ export const GameRound = (): JSX.Element => {
   // Añadir esta función para preparar las respuestas mezcladas
   const prepareShuffledAnswers = async () => {
     if (!question || !round) return;
-    
+
     try {
       // Obtener las respuestas con datos de jugadores
       const { data: answersWithPlayers, error: answersError } = await supabase
@@ -1133,7 +1133,7 @@ export const GameRound = (): JSX.Element => {
               <span className="font-medium">{question?.text.replace(/\.$/, '')}</span>{' '}
               <span className="italic">{question?.content}</span>?
             </p>
-          </div>
+            </div>
 
           {/* Contenedor negro con instrucciones */}
           <div className="bg-[#131309] rounded-[20px] px-6 py-4 mb-6">
@@ -1146,7 +1146,7 @@ export const GameRound = (): JSX.Element => {
           <div className="space-y-3">
             {shuffledAnswers.map((answer, index) => (
               <div 
-                key={index}
+                  key={index}
                 className={`
                   bg-white rounded-[15px] p-4 border-2 transition-all
                   ${selectedVote === answer.content 
@@ -1162,8 +1162,8 @@ export const GameRound = (): JSX.Element => {
                   className="text-[#131309] text-lg"
                   style={{ fontFamily: 'Caveat, cursive' }}
                 >
-                  {answer.content}
-                </p>
+                    {answer.content}
+                  </p>
               </div>
             ))}
           </div>
@@ -1214,13 +1214,13 @@ export const GameRound = (): JSX.Element => {
   if (round?.results_phase) {
     const totalScores = fetchTotalScores();
 
-    return (
-      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+  return (
+    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-          BULLSHIT
-        </h1>
-        
-        <p className="text-[#131309] text-xl mt-4">
+        BULLSHIT
+      </h1>
+      
+      <p className="text-[#131309] text-xl mt-4">
           RONDA {round.number}
         </p>
 
@@ -1367,8 +1367,8 @@ export const GameRound = (): JSX.Element => {
         </h1>
 
         {/* Solo mostrar las cards si es moderador y está en fase de lectura */}
-        {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
-          <>
+      {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
+        <>
             <div className="w-full max-w-[375px] mt-8 mb-28">
               <div className="text-center mb-6">
                 <p className="text-[#131309] text-lg font-bold">
@@ -1378,10 +1378,10 @@ export const GameRound = (): JSX.Element => {
 
               <div className="bg-[#131309] rounded-[20px] p-6 px-8 py-4 mb-6">
                 <p className="text-white text-center">
-                  Lee las respuestas al resto de jugadores.
-                  Se han ordenado aleatoriamente junto a la respuesta real.
-                </p>
-              </div>
+                Lee las respuestas al resto de jugadores.
+                Se han ordenado aleatoriamente junto a la respuesta real.
+              </p>
+            </div>
 
               <div className="relative h-[300px]">
                 {exitingCards.map(card => (
@@ -1426,10 +1426,10 @@ export const GameRound = (): JSX.Element => {
                   }}
                 >
                   <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-[#131309] text-xl">
-                        Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
-                      </p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[#131309] text-xl">
+                  Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
+                </p>
                     </div>
                     <div className="bg-white rounded-[10px] p-4 h-[200px]">
                       <p 
@@ -1479,8 +1479,8 @@ export const GameRound = (): JSX.Element => {
               </p>
             </div>
           </div>
-        )}
-      </div>
+                )}
+              </div>
     );
   }
 
@@ -1563,8 +1563,8 @@ export const GameRound = (): JSX.Element => {
                       className="text-[#131309] text-2xl"
                       style={{ fontFamily: 'Caveat, cursive' }}
                     >
-                      {shuffledAnswers[currentAnswerIndex].content}
-                    </p>
+                  {shuffledAnswers[currentAnswerIndex].content}
+                </p>
                   </div>
                 </div>
               </div>

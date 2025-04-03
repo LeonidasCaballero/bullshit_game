@@ -79,7 +79,7 @@ export const JoinGame = (): JSX.Element => {
           </h1>
 
           <div className="w-full">
-            <Card className="rounded-[20px] overflow-hidden border-none">
+            <Card className="rounded-[20px] overflow-hidden border-none bg-white">
               <CardContent className="p-5 space-y-5">
                 <h2 className="font-bold text-xl text-[#131309]">
                   {isCreator 

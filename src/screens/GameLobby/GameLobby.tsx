@@ -90,9 +90,12 @@ export const GameLobby = (): JSX.Element => {
         // Fetch game
         const { data: gameData, error: gameError } = await supabase
           .from('games')
-          .select('*')
+          .select('*, creator_id')
           .eq('id', gameId)
           .single();
+
+        console.log('Datos del juego cargados:', gameData);
+        console.log('creator_id del juego:', gameData.creator_id);
 
         if (gameError) throw gameError;
         setGame(gameData);
@@ -128,7 +131,15 @@ export const GameLobby = (): JSX.Element => {
           .order('created_at', { ascending: true });
 
         if (playersError) throw playersError;
-        if (playersData) setPlayers(playersData);
+        if (playersData) {
+          setPlayers(playersData);
+          const player = playersData.find(p => p.name === playerName);
+          console.log('Encontrado jugador actual:', player);
+          if (player) {
+            console.log('Asignando currentPlayerId:', player.id);
+            setCurrentPlayerId(player.id);
+          }
+        }
       } catch (err) {
         console.error('Error in fetchGameAndPlayers:', err);
         setError('Error al cargar la partida');
@@ -234,6 +245,17 @@ export const GameLobby = (): JSX.Element => {
     }
   };
 
+  useEffect(() => {
+    console.log('=== DEPURACIÓN CREADOR ===');
+    console.log('currentPlayerId:', currentPlayerId);
+    console.log('game?.creator_id:', game?.creator_id);
+    console.log('Son iguales?', currentPlayerId === game?.creator_id);
+    console.log('Tipo de currentPlayerId:', typeof currentPlayerId);
+    console.log('Tipo de game?.creator_id:', typeof game?.creator_id);
+    console.log('Jugadores:', players);
+    console.log('========================');
+  }, [currentPlayerId, game, players]);
+
   if (error) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen px-6">
@@ -267,9 +289,20 @@ export const GameLobby = (): JSX.Element => {
 
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-      <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
-        BULLSHIT
-      </h1>
+      <>
+        <div className="text-xs text-gray-500 mt-8">
+          ID: {currentPlayerId?.substring(0, 8)}... | Creador: {game?.creator_id?.substring(0, 8)}...
+        </div>
+        
+        {String(currentPlayerId) === String(game?.creator_id) && (
+          <div className="px-3 py-1 bg-[#131309] rounded-md text-white text-sm font-medium mt-1 mb-1">
+            Creador
+          </div>
+        )}
+        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-2">
+          BULLSHIT
+        </h1>
+      </>
       
       <p className="text-[#131309] text-xl mt-2">
         presenta a...
@@ -289,11 +322,23 @@ export const GameLobby = (): JSX.Element => {
           </button>
         </div>
 
-        <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
-          <p className="text-center">
-            Espera a que se unan todos los jugadores antes de comenzar.
-          </p>
-        </div>
+        {/* Mensaje condicional basado en si es el primer jugador o no */}
+        {players.length > 0 && currentPlayerId === players[0].id ? (
+          <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
+            <p className="text-center">
+              Eres el primer jugador en llegar.
+            </p>
+            <p className="text-center mt-2">
+              Cuando todos los demás hayan llegado, haz click en 'Comenzar Partida'.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
+            <p className="text-center">
+              Espera a que se unan todos los jugadores antes de comenzar.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3">
           {players.map((player) => (
@@ -314,14 +359,26 @@ export const GameLobby = (): JSX.Element => {
           ))}
         </div>
 
-        <Button
-          className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base mt-6"
-          onClick={handleStartGame}
-          disabled={players.length < 2 || isStartingGame}
-        >
-          {isStartingGame ? "Iniciando partida..." : 
-            players.length < 2 ? "Esperando jugadores..." : "Comenzar partida"}
-        </Button>
+        {/* Banner informativo para jugadores que no son el primero */}
+        {players.length > 0 && currentPlayerId !== players[0].id && (
+          <div className="border-2 border-[#131309] text-[#131309] p-4 rounded-[10px] mt-6">
+            <p className="text-center">
+              {players[0]?.name} comenzará la partida cuando estéis todos dentro
+            </p>
+          </div>
+        )}
+
+        {/* Botón de comenzar partida solo visible para el primer jugador */}
+        {players.length > 0 && currentPlayerId === players[0].id && (
+          <Button
+            className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base mt-3"
+            onClick={handleStartGame}
+            disabled={players.length < 2 || isStartingGame}
+          >
+            {isStartingGame ? "Iniciando partida..." : 
+              players.length < 2 ? "Esperando jugadores..." : "Comenzar partida"}
+          </Button>
+        )}
       </div>
     </div>
   );
