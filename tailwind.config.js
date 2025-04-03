@@ -105,7 +105,19 @@ module.exports = {
             transform: 'translateX(100vw) rotate(5deg)', 
             opacity: 0 
           }
-        }
+        },
+        flicker: {
+          '0%, 18%, 22%, 25%, 53%, 57%, 100%': { opacity: '1' },
+          '20%, 24%, 55%': { opacity: '0.5' },
+        },
+        fireBorder: {
+          '0%, 100%': { 
+            boxShadow: '0 0 8px 2px rgba(255,87,0,0.7), 0 0 0 0 rgba(255,87,0,0.4)' 
+          },
+          '50%': { 
+            boxShadow: '0 0 16px 4px rgba(255,87,0,0.7), 0 0 0 8px rgba(255,87,0,0)' 
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -113,7 +125,9 @@ module.exports = {
         slideLeft: 'slideLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         slideRight: 'slideRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         exitLeft: 'exitLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        exitRight: 'exitRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        exitRight: 'exitRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        'flicker': 'flicker 2s ease-in-out infinite alternate',
+        'fire-border': 'fireBorder 2s ease-in-out infinite',
       },
     },
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },

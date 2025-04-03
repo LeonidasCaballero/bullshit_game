@@ -1126,95 +1126,82 @@ export const GameRound = (): JSX.Element => {
           RONDA {round.number}
         </p>
 
-        <div className="w-full max-w-md px-4 mt-8 mb-28">
-          {question && (
-            <div className="space-y-4">
-              <div className="bg-[#131309] rounded-[20px] p-6">
-                <p className="text-white text-xl text-center">
-                  {question.text}
+        <div className="w-full max-w-[375px] mt-4 mb-24 px-4">
+          {/* Pregunta en formato pequeño arriba */}
+          <div className="text-center mb-4">
+            <p className="text-[#131309] text-sm">
+              <span className="font-medium">{question?.text.replace(/\.$/, '')}</span>{' '}
+              <span className="italic">{question?.content}</span>?
+            </p>
+          </div>
+
+          {/* Contenedor negro con instrucciones */}
+          <div className="bg-[#131309] rounded-[20px] px-6 py-4 mb-6">
+            <p className="text-white text-center font-medium">
+              Selecciona la respuesta real
+            </p>
+          </div>
+
+          {/* Lista de opciones de respuesta */}
+          <div className="space-y-3">
+            {shuffledAnswers.map((answer, index) => (
+              <div 
+                key={index}
+                className={`
+                  bg-white rounded-[15px] p-4 border-2 transition-all
+                  ${selectedVote === answer.content 
+                    ? 'border-[#CB1517]' 
+                    : hasVoted 
+                      ? 'border-transparent opacity-50' 
+                      : 'border-transparent hover:border-[#CB1517] cursor-pointer'
+                  }
+                `}
+                onClick={() => !hasVoted && handleVote(answer.content)}
+              >
+                <p 
+                  className="text-[#131309] text-lg"
+                  style={{ fontFamily: 'Caveat, cursive' }}
+                >
+                  {answer.content}
                 </p>
               </div>
-
-              <div className="bg-white rounded-[20px] p-4">
-                <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
-                  {question.content}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-white rounded-[10px] p-6">
-            <div className="space-y-4">
-              {shuffledAnswers.map((answer, index) => {
-                const isOwnAnswer = answer.playerId === currentPlayer?.id;
-                const isDisabled = isOwnAnswer || hasVoted;
-                const isSelected = selectedVote === answer.content;
-
-                return (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedVote(answer.content)}
-                    className={`w-full p-4 rounded-[10px] text-left transition-colors ${
-                      isDisabled && !isSelected
-                        ? 'bg-[#E7E7E6] cursor-not-allowed opacity-50'
-                        : isSelected
-                        ? 'bg-[#131309] text-white'
-                        : 'bg-white text-[#131309] hover:bg-gray-50 border border-[#E7E7E6]'
-                    }`}
-                    disabled={isDisabled}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold">
-                        Opción {index + 1}
-                      </span>
-                      {isOwnAnswer && (
-                        <span className="text-sm text-[#CB1517]">
-                          Tu respuesta
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-lg font-['Londrina_Solid']" style={{ fontFamily: 'cursive' }}>
-                      {answer.content}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
+            ))}
           </div>
         </div>
 
-        {!hasVoted && (
+        {/* Botón de votar en la parte inferior */}
+        {round?.voting_phase && !isModerator && !hasVoted && selectedVote && (
           <div className="fixed bottom-0 left-0 right-0">
             <div className="bg-white w-full px-6 pt-5 pb-8">
               <div className="max-w-[327px] mx-auto">
-                {selectedVote ? (
-                  <button
-                    onClick={() => handleVote(selectedVote)}
-                    className="w-full p-4 bg-[#CB1517] hover:bg-[#B31315] text-white font-bold rounded-[10px] transition-colors"
-                  >
-                    Confirmar voto
-                  </button>
-                ) : (
-                  <p className="text-center text-[#131309] opacity-50">
-                    Selecciona una respuesta para votar
-                  </p>
-                )}
+                <Button
+                  className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+                  onClick={handleSubmitVote}
+                >
+                  Confirmar voto
+                </Button>
               </div>
             </div>
           </div>
         )}
 
-        {hasVoted && (
+        {/* Mensaje después de votar */}
+        {round?.voting_phase && !isModerator && hasVoted && (
           <div className="fixed bottom-0 left-0 right-0">
             <div className="bg-white w-full px-6 pt-5 pb-8">
-              <div className="max-w-[327px] mx-auto">
-                <p className="text-center text-[#131309] font-bold">
+              <div className="max-w-[327px] mx-auto flex flex-col items-center">
+                <div className="w-16 h-16 bg-[#131309] rounded-full flex items-center justify-center mb-6">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="#9FFF00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-[#131309] text-2xl font-bold mb-4 text-center">
                   ¡Voto registrado!
                 </p>
-                <p className="text-center text-[#131309] mt-2">
+                <p className="text-[#131309] text-base text-center">
                   {allPlayersVoted 
-                    ? "¡Ya han votado todos los jugadores!" 
-                    : "Esperando al resto de jugadores..."}
+                    ? "Todos han votado. Veremos los resultados pronto." 
+                    : "Esperando a que los demás voten..."}
                 </p>
               </div>
             </div>
@@ -1733,9 +1720,9 @@ export const GameRound = (): JSX.Element => {
                       {pendingPlayers.length > 0 ? (
                         <>
                           <Button
-                            className="w-full h-12 bg-[#131309] hover:bg-[#000000] text-white rounded-[10px] font-bold text-base mb-6"
+                            className="w-full h-12 bg-[#131309] hover:bg-[#131309] rounded-[10px] font-bold text-base mb-6 relative overflow-hidden group"
                             onClick={async () => {
-                              console.log('🤬 Enviando insulto gratuito por broadcast...');
+                              console.log('🤬 Enviando insulto al resto por broadcast...');
                               // Enviar broadcast en lugar de actualizar la DB
                               supabase
                                 .channel('insulto-broadcast')
@@ -1748,14 +1735,16 @@ export const GameRound = (): JSX.Element => {
                                 .catch(err => console.error('❌ Error enviando broadcast:', err));
                             }}
                           >
-                            Insulto gratuito
+                            {/* Efecto de borde de fuego */}
+                            <span className="absolute inset-0 rounded-[10px] border-2 border-[#FF5700] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            
+                            {/* Animación de brillo de fuego en los bordes */}
+                            <span className="absolute inset-0 rounded-[10px] shadow-[0_0_10px_3px_rgba(255,87,0,0.7)] opacity-0 group-hover:opacity-100 animate-fire-border"></span>
+                            
+                            <span className="relative z-10 text-white">Insulta al resto</span>
                           </Button>
-                          <Timer className="w-8 h-8 text-[#131309] mb-2" />
-                          <p className="text-[#131309] text-xl font-bold mb-1">
-                            Esperando las respuestas
-                          </p>
-                          <p className="text-[#131309] text-base mb-4">
-                            Quedan {pendingPlayers.length} jugadores por enviar la suya:
+                          <p className="text-[#131309] text-xl font-bold mb-4">
+                            Quedan {pendingPlayers.length} jugadores por responder:
                           </p>
                           <div className="w-full space-y-2 mb-4">
                             {pendingPlayers.map(player => (
