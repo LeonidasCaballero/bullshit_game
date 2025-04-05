@@ -99,42 +99,53 @@ export const GameScores = () => {
             gameId
           });
 
-          // Obtener la siguiente ronda
+          // 1. Marcar la ronda actual como inactiva
+          await supabase
+            .from('rounds')
+            .update({ active: false })
+            .eq('id', location.state?.roundId);
+
+          // 2. Obtener la siguiente ronda
           const { data: nextRound, error } = await supabase
             .from('rounds')
             .select()
             .eq('game_id', gameId)
-            .eq('number', roundNumber + 1)
-            .limit(1)  // Asegurarnos de obtener solo una ronda
+            .gt('number', roundNumber)
+            .order('number', { ascending: true })
+            .limit(1)
             .single();
 
-          if (error) {
-            console.error('Error obteniendo siguiente ronda:', error);
-            throw error;
-          }
-
-          if (!nextRound) {
-            console.log('🏁 Juego terminado - No hay más rondas');
-            // TODO: Navegar a pantalla de fin de juego
+          if (error || !nextRound) {
+            console.log('No hay más rondas, volviendo al lobby...');
+            navigate(`/game/${gameId}/lobby`);
             return;
           }
 
-          console.log('✅ Siguiente ronda encontrada:', {
+          // 3. Marcar la siguiente ronda como activa
+          await supabase
+            .from('rounds')
+            .update({ active: true })
+            .eq('id', nextRound.id);
+
+          // 4. Actualizar el current_round_id en la tabla games
+          await supabase
+            .from('games')
+            .update({ current_round_id: nextRound.id })
+            .eq('id', gameId);
+
+          console.log('✅ Siguiente ronda activada:', {
             roundId: nextRound.id,
-            number: nextRound.number,
-            moderator: nextRound.moderator_id,
-            phase: nextRound.reading_phase ? 'reading' : nextRound.voting_phase ? 'voting' : 'initial'
+            number: nextRound.number
           });
 
-          // Navegar a la siguiente ronda
-          navigate(`/game/${gameId}/round`, {
+          // 5. Navegar a la pantalla de introducción para la siguiente ronda
+          navigate(`/game/${gameId}/round/intro`, {
             state: { 
               playerName: location.state?.playerName,
               roundNumber: nextRound.number,
               roundId: nextRound.id,
               moderatorId: nextRound.moderator_id,
-              category: nextRound.category,
-              phase: 'reading'
+              category: nextRound.category
             }
           });
 
