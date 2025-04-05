@@ -92,19 +92,16 @@ export const GameScores = () => {
     }
 
     if (countdown === 0) {
-      const navigateToNextRound = async () => {
+      const handleTimerComplete = async () => {
+        console.log('⏱️ Timer completado, buscando siguiente ronda...', { gameId, roundNumber });
+        
         try {
-          console.log('⏱️ Timer completado, buscando siguiente ronda...', {
-            currentRound: roundNumber,
-            gameId
-          });
-
           // 1. Marcar la ronda actual como inactiva
           await supabase
             .from('rounds')
             .update({ active: false })
             .eq('id', location.state?.roundId);
-
+          
           // 2. Obtener la siguiente ronda
           const { data: nextRound, error } = await supabase
             .from('rounds')
@@ -114,48 +111,44 @@ export const GameScores = () => {
             .order('number', { ascending: true })
             .limit(1)
             .single();
-
+          
           if (error || !nextRound) {
             console.log('No hay más rondas, volviendo al lobby...');
-            navigate(`/game/${gameId}/lobby`);
+            navigate(`/game/${gameId}`);
             return;
           }
-
+          
+          console.log('Siguiente ronda encontrada:', nextRound);
+          
           // 3. Marcar la siguiente ronda como activa
           await supabase
             .from('rounds')
             .update({ active: true })
             .eq('id', nextRound.id);
-
+          
           // 4. Actualizar el current_round_id en la tabla games
           await supabase
             .from('games')
             .update({ current_round_id: nextRound.id })
             .eq('id', gameId);
-
-          console.log('✅ Siguiente ronda activada:', {
-            roundId: nextRound.id,
-            number: nextRound.number
-          });
-
-          // 5. Navegar a la pantalla de introducción para la siguiente ronda
+          
+          // 5. Navegar a la pantalla de introducción de la siguiente ronda
           navigate(`/game/${gameId}/round/intro`, {
-            state: { 
-              playerName: location.state?.playerName,
-              roundNumber: nextRound.number,
+            state: {
               roundId: nextRound.id,
+              roundNumber: nextRound.number,
               moderatorId: nextRound.moderator_id,
+              playerName: location.state?.playerName,
               category: nextRound.category
             }
           });
-
         } catch (err) {
-          console.error('Error navegando a siguiente ronda:', err);
-          navigate(`/game/${gameId}/lobby`);
+          console.error('Error al buscar la siguiente ronda:', err);
+          navigate(`/game/${gameId}`);
         }
       };
 
-      navigateToNextRound();
+      handleTimerComplete();
     }
   }, [countdown, gameId, navigate, location.state?.playerName, roundNumber]);
 

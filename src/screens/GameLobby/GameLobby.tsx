@@ -4,6 +4,7 @@ import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Users, ArrowLeft, Share2 } from "lucide-react";
 import type { Player, Game } from "../../lib/types";
+import { initializeGameQuestions, getQuestionForRound } from '../../services/questionService';
 
 // Usar un servicio de avatares generados
 const getAvatarUrl = (seed: string) => 
@@ -154,66 +155,80 @@ export const GameLobby = (): JSX.Element => {
   }, [gameId, navigate, playerName]);
 
   const handleStartGame = async () => {
-    if (!gameId || players.length < 2 || isStartingGame) return;
-    
-    setIsStartingGame(true);
-    
     try {
-      // 1. Obtener todas las preguntas disponibles
-      const { data: availableQuestions } = await supabase
-        .from('questions')
-        .select('id')
-        .eq('category', 'pelicula');
-
-      if (!availableQuestions || availableQuestions.length === 0) {
-        throw new Error('No hay preguntas disponibles');
+      setIsStartingGame(true);
+      
+      // 1. Inicializar preguntas para el juego
+      const initialized = await initializeGameQuestions(gameId);
+      
+      if (!initialized) {
+        console.error('Error inicializando preguntas');
+        setIsStartingGame(false);
+        return;
       }
-
-      // 2. Seleccionar 4 preguntas (permitiendo repeticiones si es necesario)
-      const selectedQuestions = [];
-      for (let i = 0; i < 4; i++) {
-        const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-        selectedQuestions.push(availableQuestions[randomIndex]);
-      }
-
-      // 3. Crear las 4 rondas
+      
+      // 2. Obtener preguntas para todas las rondas (vamos a crear 5 rondas)
+      const totalRounds = 5;
       const rounds = [];
-      for (let i = 0; i < 4; i++) {
-        const moderator = players[i % players.length];
+      
+      for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber++) {
+        // Obtener pregunta para esta ronda
+        const question = await getQuestionForRound(gameId, roundNumber);
+        
+        if (!question) {
+          console.error(`No se pudo obtener una pregunta para la ronda ${roundNumber}`);
+          continue;
+        }
+        
+        // Seleccionar moderador para esta ronda (rotando entre jugadores)
+        const moderatorIndex = (roundNumber - 1) % players.length;
+        const moderatorId = players[moderatorIndex].id;
+        
+        // Añadir la ronda a la lista
         rounds.push({
           game_id: gameId,
-          number: i + 1,
-          moderator_id: moderator.id,
-          category: 'pelicula',
-          active: i === 0,
-          question_id: selectedQuestions[i].id,
+          number: roundNumber,
+          moderator_id: moderatorId,
+          question_id: question.id,
+          active: roundNumber === 1, // Solo la primera ronda empieza activa
+          category: 'Siglas', // Usar una categoría que sabemos es válida
           voting_phase: false,
           reading_phase: false,
           results_phase: false
         });
       }
-
-      // 4. Insertar todas las rondas
-      const { error: roundsError } = await supabase
+      
+      // 3. Insertar todas las rondas en la base de datos
+      const { data: createdRounds, error: roundsError } = await supabase
         .from('rounds')
-        .insert(rounds);
-
-      if (roundsError) throw roundsError;
-
-      // 5. Actualizar el estado del juego
-      const { error: gameError } = await supabase
+        .insert(rounds)
+        .select();
+      
+      if (roundsError) {
+        console.error('Error creando las rondas:', roundsError);
+        throw roundsError;
+      }
+      
+      console.log(`Creadas ${createdRounds?.length || 0} rondas para el juego`);
+      
+      // 4. Actualizar el estado del juego con la primera ronda
+      const firstRoundId = createdRounds?.[0]?.id;
+      
+      if (!firstRoundId) {
+        throw new Error('No se pudo obtener el ID de la primera ronda');
+      }
+      
+      await supabase
         .from('games')
         .update({ 
           started: true,
-          current_round_id: rounds[0].id 
+          current_round_id: firstRoundId
         })
         .eq('id', gameId);
-
-      if (gameError) throw gameError;
-
-    } catch (err) {
-      console.error('Error starting game:', err);
-      setError('Error al iniciar el juego');
+      
+      // Continuar con el código existente...
+    } catch (error) {
+      console.error('Error al iniciar el juego:', error);
       setIsStartingGame(false);
     }
   };
@@ -231,12 +246,13 @@ export const GameLobby = (): JSX.Element => {
 
       if (latestRound) {
         // Usar la ronda más reciente para determinar el estado del juego
-        navigate(`/game/${gameId}/round`, {
+        navigate(`/game/${gameId}/round/intro`, {
           state: {
             roundId: latestRound.id,
             roundNumber: latestRound.number,
             moderatorId: latestRound.moderator_id,
-            playerName: location.state?.playerName
+            playerName: location.state?.playerName,
+            category: latestRound.category
           }
         });
       }
@@ -383,3 +399,56 @@ export const GameLobby = (): JSX.Element => {
     </div>
   );
 };
+
+// Función para mapear categorías
+const mapQuestionCategory = (category: string): string => {
+  if (!category) return 'Peliculas'; // Valor por defecto si no hay categoría
+  
+  // Normalizar la categoría (minúsculas, sin espacios)
+  const normalizedCategory = category.toLowerCase().trim();
+  
+  // Mapa de conversión más exhaustivo
+  const categoryMap: {[key: string]: string} = {
+    'pelicula': 'Peliculas',
+    'película': 'Peliculas',
+    'peliculas': 'Peliculas',
+    'películas': 'Peliculas',
+    'film': 'Peliculas',
+    'sigla': 'Siglas',
+    'siglas': 'Siglas',
+    'acronimo': 'Siglas',
+    'acrónimo': 'Siglas',
+    'personaje': 'Personajes',
+    'personajes': 'Personajes',
+    'character': 'Personajes',
+    'palabra': 'Palabras',
+    'palabras': 'Palabras',
+    'word': 'Palabras',
+    'muerte': 'Muertes',
+    'muertes': 'Muertes',
+    'death': 'Muertes',
+    'idioma': 'Idiomas',
+    'idiomas': 'Idiomas',
+    'language': 'Idiomas'
+  };
+  
+  // Devolver categoría mapeada o un valor por defecto si no hay coincidencia
+  return categoryMap[normalizedCategory] || 'Peliculas';
+};
+
+// Función para normalizar categorías (eliminar acentos)
+function normalizeCategory(category: string): string {
+  if (!category) return 'Peliculas';
+  
+  // Mapeo directo de categorías con acentos a categorías sin acentos
+  const categoryMap: {[key: string]: string} = {
+    'Películas': 'Peliculas',
+    'Siglas': 'Siglas', // Misma categoría sin acento
+    'Personajes': 'Personajes',
+    'Palabras': 'Palabras',
+    'Muertes': 'Muertes',
+    'Idiomas': 'Idiomas'
+  };
+  
+  return categoryMap[category] || 'Peliculas'; // Valor predeterminado si no coincide
+}

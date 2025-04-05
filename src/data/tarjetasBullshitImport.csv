@@ -1,0 +1,440 @@
+question_id,type,question_intro,question_text,answer
+1,Siglas,¿Qué significan las siglas...,APAPEP,Asociación de Parejas Afectadas Por la Eyaculación Precoz
+2,Siglas,¿Qué significan las siglas...,FMLH,Federación mundial del lanzamiento de huevos
+3,Siglas,¿Qué significan las siglas...,LHO,Lanzamiento Huesos de Oliva
+4,Siglas,¿Qué significan las siglas...,CMEG,Campeonato mundial de encantamiento de gusanos
+5,Siglas,¿Qué significan las siglas...,CMLDP,Campeonato mundial de lucha de dedo de pie
+6,Siglas,¿Qué significan las siglas...,AMAB,Asociación mundial de ajedrez boxeo
+7,Siglas,¿Qué significan las siglas...,PRUAD,Plataforma Recreativa la Unión Amigos del Dominó 
+8,Siglas,¿Qué significan las siglas...,HNDA,Hermandad Nacional División Azul
+9,Siglas,¿Qué significan las siglas...,ATEAVA,Asociación de Trabajadores Esenciales Afectados por la Vacuna Astrazeneca
+10,Siglas,¿Qué significan las siglas...,AACSF,Asociación de Afectados por la construcción de la Sagrada Familia
+11,Siglas,¿Qué significan las siglas...,AAC,Asociación de Afectados por las Criptomonedas 
+12,Siglas,¿Qué significan las siglas...,CAdC,Club de Amigos del Cocido
+13,Siglas,¿Qué significan las siglas...,CATTV,Club de Amigos el Toro TV
+14,Siglas,¿Qué significan las siglas...,UDG,Union deportiva guarroman
+15,Siglas,¿Qué significan las siglas...,ACDACP,Asociación Cultural Deportiva Amigos del Caballo de Pepino
+16,Siglas,¿Qué significan las siglas...,FPDG,Fundación para la Dignidad del Hombre
+17,Siglas,¿Qué significan las siglas...,PeC,Pajas entre Colegas
+18,Siglas,¿Qué significan las siglas...,AATT,Asociación de Asalariados del Taxi de Torremolinos
+19,Siglas,¿Qué significan las siglas...,PAAMSE,Plataforma Andaluza de Asociaciones Mixtas de Separados
+20,Siglas,¿Qué significan las siglas...,AACSM,Asociación de Afectados por el Caciquismo en la Sierra de Madrid
+21,Siglas,¿Qué significan las siglas...,AAV,Asociación Amigos de la Verbena
+22,Siglas,¿Qué significan las siglas...,AHMPHGM,Archicofradia y Hermandad para la Memoria de la Pasion Historica y Gloria Mariana
+23,Siglas,¿Qué significan las siglas...,AMAVAAAD,Asociación Madrileña de Vecinos Amigos de la Virgen del Abrazo la Abrazada por Dios
+24,Siglas,¿Qué significan las siglas...,AJAMG,Asociación Juvenil Ancestos de los Magos Grises
+25,Siglas,¿Qué significan las siglas...,AACESM,Asociación de la Alegre Cofradía del Entierro de la Sardina de Madrid
+26,Siglas,¿Qué significan las siglas...,ACRF,Asociación Comparsa Rosquilleras de Fuenlabrada
+27,Siglas,¿Qué significan las siglas...,CSVCRE,Club Siempre Verde de los Chinos Residentes en España
+28,Siglas,¿Qué significan las siglas...,ACFCL,Asociación Cultural Futbol Chapas Leganes
+29,Siglas,¿Qué significan las siglas...,ACUAC,Asociación Cultural Unicornio Azul Clarito
+30,Siglas,¿Qué significan las siglas...,CGCAVM,Club Gastronomico Cervantes Amigos del Vino y del Mus
+31,Siglas,¿Qué significan las siglas...,HVTNS,Hermandad de Veteranos de las Tropas Nomadas del Sahara
+32,Siglas,¿Qué significan las siglas...,PDT,Programa de detección de Talento
+33,Siglas,¿Qué significan las siglas...,AMGF,Asociación Mundial de Gente Fea
+34,Siglas,¿Qué significan las siglas...,SSP,Sociedad de Sheila y su Perro
+35,Siglas,¿Qué significan las siglas...,SACDA,Sociedad Americana de Cebolla Deshidratada y Ajo
+36,Siglas,¿Qué significan las siglas...,SANC,Sociedad de Apreciación a Nicolas Cage
+37,Siglas,¿Qué significan las siglas...,CPFEPC,Club de Pelo que Fluye Exuberante para los Cientificos
+38,Siglas,¿Qué significan las siglas...,APEL,Asociación para el estudio de Lapidas
+39,Siglas,¿Qué significan las siglas...,CALB,Confederación Africana-Levantina de Billar
+40,Siglas,¿Qué significan las siglas...,CEEV,Centro de Educación Especial para Vagos
+41,Siglas,¿Qué significan las siglas...,ICIS,Independientes Con Inclinación Socialista
+42,Siglas,¿Qué significan las siglas...,CNPJ,Concurso Nacional de Paellas para Jubilados
+43,Siglas,¿Qué significan las siglas...,CIS,Club Internacional de Suegras
+44,Siglas,¿Qué significan las siglas...,CEGP,Club Español de Gimnasia Pasiva
+45,Siglas,¿Qué significan las siglas...,CDCVNN,Comisión de Defensar de una Costa Vasca No Nuclear
+46,Siglas,¿Qué significan las siglas...,CIHV,Concurso Intenacional de Helados de Verduras
+47,Siglas,¿Qué significan las siglas...,ANVP,Asociación Nacional de Vendedores con Pajarita
+48,Siglas,¿Qué significan las siglas...,APPHAI,Asociación para la Promoción del Humor en Asuntos Internacionales
+49,Siglas,¿Qué significan las siglas...,COVA,Colegio Oficial de Videntes en Activo
+50,Siglas,¿Qué significan las siglas...,ENEQ,Equipo Nacional Español de Quidditch
+51,Siglas,¿Qué significan las siglas...,CMBC,Caimanes de Madrid Beisbol Club
+52,Siglas,¿Qué significan las siglas...,CATS,Comite de Apoyo a las Trabajadoras del Sexo
+53,Siglas,¿Qué significan las siglas...,CJAS,Centros Jóvenes de Anticoncepción y Sexualidad
+54,Siglas,¿Qué significan las siglas...,APTM,Asociación Por Ti Mujer
+55,Siglas,¿Qué significan las siglas...,PDGL,Partido Democrata Gay Lesbico
+56,Siglas,¿Qué significan las siglas...,PERI,Partido Ecologísta Radical Intransigente
+57,Siglas,¿Qué significan las siglas...,PAEA,Partido Australiano Entusiastas del Automovilismo
+58,Siglas,¿Qué significan las siglas...,PDLC,Partido de la Cerveza
+59,Siglas,¿Qué significan las siglas...,AAMR,Asociación de Artes Marciales Renacentistas
+60,Siglas,¿Qué significan las siglas...,ANPP,Asociación Nacional de Paseadores de Perros
+61,Siglas,¿Qué significan las siglas...,CDHG,Club de Hombres Gordos
+62,Siglas,¿Qué significan las siglas...,ATCE,Asociación Tolkien Catolica de España
+63,Siglas,¿Qué significan las siglas...,ALSV,Asociación Lucha y Sonrie por la Vida
+64,Siglas,¿Qué significan las siglas...,FELB,FEDERACION ESPAÑOLA DE LUCHA DE BRAZOS
+65,Siglas,¿Qué significan las siglas...,GPSCR,Gran Procesión del Santo Chumino Rebelde
+66,Siglas,¿Qué significan las siglas...,LCSAP,Liga Comunista Servir Al Pueblo
+67,Siglas,¿Qué significan las siglas...,PNOJ,Partido Nacionalsocialista Obrero Japones
+68,Siglas,¿Qué significan las siglas...,PPFS,Partido Popular Fascista de Suecia
+69,Siglas,¿Qué significan las siglas...,JCAH,Juntas Castellanas de Actuación Hispanica
+70,Siglas,¿Qué significan las siglas...,FSB,Falange Socialista Boliviana
+71,Siglas,¿Qué significan las siglas...,MQMT,Museo del Queso Manchego de Toledo 
+72,Siglas,¿Qué significan las siglas...,RCDN,Real Colegio de Doncellas Nobles
+73,Siglas,¿Qué significan las siglas...,AAGR,Asociación Amigos de los Gatos del Retiro
+74,Siglas,¿Qué significan las siglas...,APP,Asociación de Padel de Pichincha
+75,Siglas,¿Qué significan las siglas...,APSP,Asociación de Personas Sordas de Parla
+76,Siglas,¿Qué significan las siglas...,ACCG,Asociación de Criadores de Cabra del Guadarrama
+77,Siglas,¿Qué significan las siglas...,AAMA,Asociación Antirracista de Madres Afrodescendientes
+78,Siglas,¿Qué significan las siglas...,ABPT,Asociación de Baile Punta Tacon
+79,Siglas,¿Qué significan las siglas...,ACGREA,Asociación de Criadores de Gallinas de Raza Extremeña Azul
+80,Siglas,¿Qué significan las siglas...,AVAP,Asociación de Veteranos Artilleros Paracaidistas
+81,Siglas,¿Qué significan las siglas...,ACATC,Asociación Club de Amigos de los Tractores Clasicos
+82,Siglas,¿Qué significan las siglas...,AECCE,Asociación Española de Criadores de Conejos Enanos
+83,Siglas,¿Qué significan las siglas...,ACLEB,Asociación de Comerciantes Legales de Encajes de Bolillos
+84,Siglas,¿Qué significan las siglas...,ASABE,Asociación de Amigos de la Bandera Española
+85,Siglas,¿Qué significan las siglas...,PAPP,Partido Anti Power Point
+86,Siglas,¿Qué significan las siglas...,PACP,Partido de Amantes de la Cerveza de Polonia
+87,Siglas,¿Qué significan las siglas...,PPD,Partido de las Pistolas y Drogas
+88,Siglas,¿Qué significan las siglas...,CMLT,Campeonato Mundial de Lanzamiento de Telefono
+89,Siglas,¿Qué significan las siglas...,CLTO,Campeonato de Lanzamiento de Taburete de Ordeñar
+90,Siglas,¿Qué significan las siglas...,CMGI,Campeonato del Mundo de Guitarra Invisible
+91,Siglas,¿Qué significan las siglas...,CMFP,Campeonato Mundial de Futbol en Pantanos
+92,Siglas,¿Qué significan las siglas...,AMBA,Asociación Mundial de Boxeo-Ajedrez
+93,Siglas,¿Qué significan las siglas...,AIEZ,Asociación Internacional de Estudios de Zombis
+94,Siglas,¿Qué significan las siglas...,SIFS,Sociedad Internacional de Física de Superheroes
+95,Siglas,¿Qué significan las siglas...,SIED,Sociedad Internacional de Estudios sobre Dragones
+96,Siglas,¿Qué significan las siglas...,AIRP,Asociación de Investigadores de Realidades Paralelas
+97,Siglas,¿Qué significan las siglas...,AMIVT,Asociación Mundial de Ingeniería de Viajes en el Tiempo
+98,Siglas,¿Qué significan las siglas...,AEFP,Asociación Española de Fetichistas de Pies
+99,Palabras,¿Qué significa la palabra...,Barrenado,Alguien perturbado
+100,Palabras,¿Qué significa la palabra...,Bahorrina,Conjunto de cosas asquerosas mezcladas con agua sucia
+101,Palabras,¿Qué significa la palabra...,Almiforero,Ladron especializado en la toma de caballos y mulas
+102,Palabras,¿Qué significa la palabra...,Amación,Enamoramiento místico
+103,Palabras,¿Qué significa la palabra...,Batimán,Cuando alguien mueve muy rapido los brazos al hablar
+104,Palabras,¿Qué significa la palabra...,Bosta,Mierda de vaca o caballo
+105,Palabras,¿Qué significa la palabra...,Búa,Tumorcillo que sale en el cuerpo
+106,Palabras,¿Qué significa la palabra...,Carpanta,Hambre violenta
+107,Palabras,¿Qué significa la palabra...,Catoptromancia,Ciencia de adivinar por medio de un espejo
+108,Palabras,¿Qué significa la palabra...,Dogal,Cuerda que se usaba para ahorcar a peña
+109,Palabras,¿Qué significa la palabra...,Doñear,Cortejar o andar entre mujeres
+110,Palabras,¿Qué significa la palabra...,Drogman,Persona que interpreta lenguas
+111,Palabras,¿Qué significa la palabra...,Epulón,El que come y se regala mucho
+112,Palabras,¿Qué significa la palabra...,Modrego,Hombre torpe y sin gracia
+113,Palabras,¿Qué significa la palabra...,Pesiar,Echar maldiciones a la gente
+114,Palabras,¿Qué significa la palabra...,Petardista,Persona que estafa a otras
+115,Palabras,¿Qué significa la palabra...,Petrera,Combate a pedradas
+116,Palabras,¿Qué significa la palabra...,Pigre,"Persona que no da una, negligente y perezosa"
+117,Palabras,¿Qué significa la palabra...,Plepa,Animal o persona que tiene muchos defectos fisicos
+118,Palabras,¿Qué significa la palabra...,Remoque,Se dice de algo picante u obsceno
+119,Palabras,¿Qué significa la palabra...,Rulé,Ano
+120,Palabras,¿Qué significa la palabra...,Clister,Utensilio que se mete en el ano para limpiarlo
+121,Palabras,¿Qué significa la palabra...,Pilongo,"Persona con forma de anguila, alto y flaco"
+122,Palabras,¿Qué significa la palabra...,Rijoso,Que se excita facilmente con la presencia de una hembra
+123,Palabras,¿Qué significa la palabra...,Sacapotras,Un cirujano malo
+124,Palabras,¿Qué significa la palabra...,Teobroma,Es la semilla del cacao
+125,Palabras,¿Qué significa la palabra...,Turma,Testiculos de personas y animales
+126,Palabras,¿Qué significa la palabra...,Vellera,Mujer que afeita el vello a otra
+127,Palabras,¿Qué significa la palabra...,Venustez,Hermosura perfecta
+128,Palabras,¿Qué significa la palabra...,Virago,Mujer muy varonil
+129,Palabras,¿Qué significa la palabra...,Vulpino,Perteneciente a la zorra
+130,Palabras,¿Qué significa la palabra...,Zaborra,Niña o mujer muy gorda
+131,Palabras,¿Qué significa la palabra...,Zamujo,Persona de poco hablar
+132,Palabras,¿Qué significa la palabra...,Ringorrango,Adorno extravagante
+133,Palabras,¿Qué significa la palabra...,Rastacuero,Alguien inculto y adinerado
+134,Palabras,¿Qué significa la palabra...,Mondonguera,Mujer muy gorda de movimientos pesados
+135,Palabras,¿Qué significa la palabra...,Pelagatos,Persona pobre y mediocre
+136,Palabras,¿Qué significa la palabra...,Pinchauvas,Pillo que utilizaba alfileres en mercados para robar comida
+137,Palabras,¿Qué significa la palabra...,Casquivano,Persona que coquetea y tiene relaciones ocasionales
+138,Palabras,¿Qué significa la palabra...,Iconoclasta,QUe niega y rechaza la autoridad de maestros
+139,Palabras,¿Qué significa la palabra...,Meapilas,Persona que tiene una devoción religiosa excesiva e hipocrita
+140,Palabras,¿Qué significa la palabra...,Corito,Alguien que no lleva ropa
+141,Palabras,¿Qué significa la palabra...,Cuto,Persona a la que le falta un brazo
+142,Palabras,¿Qué significa la palabra...,Crencha,Raya que divide el pelo en dos. (La raya al lado)
+143,Palabras,¿Qué significa la palabra...,Coluvie,Grupo de gente perdida
+144,Palabras,¿Qué significa la palabra...,Esguín ,Cria del salmon que aun no salió del rio al mar
+145,Palabras,¿Qué significa la palabra...,Fautoría,Persona que favorece y excita a otra
+146,Palabras,¿Qué significa la palabra...,Fiemo,Estiercol
+147,Palabras,¿Qué significa la palabra...,Filibustero,Pirata que atacaba a los barcos en las americas
+148,Palabras,¿Qué significa la palabra...,Filili,Trato con dedicadeza
+149,Palabras,¿Qué significa la palabra...,Filipichin,Hombre demasiado fino que no se preocupaba por trabajar
+150,Palabras,¿Qué significa la palabra...,Monda,Organo reproducto masculino
+151,Palabras,¿Qué significa la palabra...,Guámaras,Fruta que provoca mal aliento y flatulencias
+152,Palabras,¿Qué significa la palabra...,Itesiano,"Persona postmoderna, alternativa, responsable y activista"
+153,Palabras,¿Qué significa la palabra...,Jipiar,Cantar con voz semejante a un gemido
+154,Palabras,¿Qué significa la palabra...,Uebos,cosa muy necesaria
+155,Palabras,¿Qué significa la palabra...,Barbián,"Desnvuelto gallardo, de caracter jovial"
+156,Palabras,¿Qué significa la palabra...,Sapenco,Caracol con rayas pardas transversales
+157,Palabras,¿Qué significa la palabra...,Vagido,Es el llanto de un recién nacido
+158,Palabras,¿Qué significa la palabra...,Burdégano,Cruce entre un caballo y un asno
+159,Palabras,¿Qué significa la palabra...,Apapachar,Dar palmaditas cariñosas
+160,Palabras,¿Qué significa la palabra...,Angurria,Cuando meas y te duele
+161,Palabras,¿Qué significa la palabra...,Logorrea,Habla excesiva y compulsiva
+162,Palabras,¿Qué significa la palabra...,Ápodo,Que no tiene pies
+163,Palabras,¿Qué significa la palabra...,Cástor,Estrella principal de la constelación de Geminis
+164,Palabras,¿Qué significa la palabra...,Bacante,Mujer que participa en Bacanales
+165,Palabras,¿Qué significa la palabra...,Nefanda,"abominable, que causa repugnancia"
+166,Palabras,¿Qué significa la palabra...,Núbil,Mujer en edad de casarse
+167,Palabras,¿Qué significa la palabra...,Ñomblon,Persona muy gorda con buenas nalgas
+168,Palabras,¿Qué significa la palabra...,Patibulario,Alguien con tan mal aspecto que produce horror
+169,Palabras,¿Qué significa la palabra...,Abuhado,Persona con cara de buho
+170,Palabras,¿Qué significa la palabra...,Selenofilia,Atracción desmedida por la luna
+171,Palabras,¿Qué significa la palabra...,Jeme,Distancia entre la punta del pulgar y la del indice
+172,Palabras,¿Qué significa la palabra...,Escosa,Mujer soltera de quien se sospechaba haber conocido varón.
+173,Palabras,¿Qué significa la palabra...,Carapito,"Unidad de medida de vino, hoy serían 16 litros"
+174,Palabras,¿Qué significa la palabra...,animálculo,"Animal muy pequeño, solo visible con Microscopio"
+175,Palabras,¿Qué significa la palabra...,Ayear,Decir Ay de forma repedita por dolor o sufrimiento
+176,Palabras,¿Qué significa la palabra...,pasagonzalo,Golpe pequeño dado generalmente en la nariz
+177,Palabras,¿Qué significa la palabra...,pegotear,Ir a la casa de alguien a la hora de comer sin estar invitado
+178,Palabras,¿Qué significa la palabra...,Samuelear,Intentar ver de forma furtiva los muslos o genitales de una mujer
+179,Palabras,¿Qué significa la palabra...,Carabaña,Homosexual gracioso
+180,Palabras,¿Qué significa la palabra...,Arrunchar,acurrucarse en días de frío y lluvia (completar)
+181,Palabras,¿Qué significa la palabra...,Clinofilia,pasión por estar 24h en la cama
+182,Palabras,¿Qué significa la palabra...,Basorexia,necesidad repentina de Besar a alguien 
+183,Palabras,¿Qué significa la palabra...,Zarrastrajo,Insulto femenino superlativo: Significa puta y borracha
+184,Palabras,¿Qué significa la palabra...,Crometofobia,Miedo extremo a gastarse el dinero
+185,Palabras,¿Qué significa la palabra...,Penterafobia,Miedo desmedido a pasar tiempo junto a tu suegra
+186,Palabras,¿Qué significa la palabra...,Coprofilia,Atracción fetichista por los excrementos
+187,Palabras,¿Qué significa la palabra...,Filocaista,Persona que aprecia las pequeñas cosas
+188,Palabras,¿Qué significa la palabra...,Funderelele,Utensilio con el que se extraen las bolas de los helados
+189,Palabras,¿Qué significa la palabra...,Vinco,Alambre que se le pone a los hocicos de los cerdos para que se callen
+190,Palabras,¿Qué significa la palabra...,Caracalla,Peinado que estuvo de moda en el siglo XVIII
+191,Palabras,¿Qué significa la palabra...,Infibular,Colocar un obstaculo en los genitales para impedir el coito
+192,Palabras,¿Qué significa la palabra...,Afrecharse,Cuando un animal se enferma por haber comido demasiado
+193,Palabras,¿Qué significa la palabra...,hexakosioihexekontahexafobia,Miedo al numero 666
+194,Palabras,¿Qué significa la palabra...,Arachibutirofobia,Miedo a que se te queden en el paladar alimentos pegajosos
+195,Palabras,¿Qué significa la palabra...,Anatidaefobia,Miedo a que un pato de esté observando
+196,Muertes,¿De que murió...,Louie Barker,Cayo mientras intentaba subir unas escaleras mecanicas que bajaban en una estación de tren.
+197,Muertes,¿De que murió...,Betty Rogers,Cayo por un acantilado empujada por un rebaño de ovejas en Inglaterra
+198,Muertes,¿De que murió...,Rylee Ferguson,Se montó en una avioneta borrachisimo y terminó estampandose contra el suelo
+199,Muertes,¿De que murió...,Ryan Maloney,Se flipó haciendo un mate jugando al basket y se le cayó la canasta en la cabeza
+200,Muertes,¿De que murió...,Ashlyn Logan,Fue atropellada por su hijo mientras le ayudaba a maniobrar.Eran de Wichita y el hijo tenía 10 años
+201,Muertes,¿De que murió...,Aimee Edwards,Murio en un hospital de Nueva York despues de inyectarse cocaina en el pene
+202,Muertes,¿De que murió...,Lotte Van Guedes,Fue decapitado en un autobus por sacar la cabeza por la ventana. Estaba cantando
+203,Muertes,¿De que murió...,Marcelo Nuñes,Fue atropellado por un avión yendo en bicicleta por una pista de aterizaje. Iba con la musica a tope
+204,Muertes,¿De que murió...,Maya Burns,"Exibicionista de San Francisco. Intentando enseñar los pechos a un conductor de tren, terminó siendo atropellada"
+205,Muertes,¿De que murió...,David Riston,Fue asesinado por una de las 126 serpientes que tenía en su casa de Maryland
+206,Muertes,¿De que murió...,Brandon Dilbert,Soldado americano que murió haciendo 'supermanning'. Colgarse de un avión con el pose de superman
+207,Muertes,¿De que murió..., Tedzu,"Japones que transmitió como subia el monte Fuji a sus seguidores en redes, hasta que se resbalo por un precipicio"
+208,Muertes,¿De que murió...,Wayne Roth,"Fue mordido por una serpiente venenosa y se fue al bar a contar la anecdota a los colegas. Tras 3 copas, murió por colapso"
+209,Muertes,¿De que murió...,Garry Mcgil,"Era abogado e intentando demostrar la fortaleza de una ventana, se empotró contra una y cayo de un piso 20"
+210,Muertes,¿De que murió...,Hugh Wilkerson,Le dió un infarto despues de atascarsele la cabeza en un sillon al intentar coger su movil
+211,Muertes,¿De que murió...,Iorghu Ranutsky,Se encontró un proyectil en un campo de Rumanía. Se lo llevó a su casa y lo golpeó con un martillo
+212,Muertes,¿De que murió...,Zaim Cosnan,"Intentó llevar a su casa en moto una pitón de 3.5 metros. A mitad de camino, la serpiente le estrangulo"
+213,Muertes,¿De que murió...,G. Morris,Murió por la infección que le causó meterse un pelo de ballena dentro del pene
+214,Muertes,¿De que murió...,Crisipo de Solos,Murio de un ataque de risa tras ver a un burro comerse unos higos
+215,Muertes,¿De que murió...,Hans Steininger,Aleman que murió cuando se pillo la barba con una puerta huyendo de un fuego
+216,Muertes,¿De que murió...,Esquilo,Falleció tras caersele en la cabeza el caparazón de tortuga lanzada por un aguila
+217,Muertes,¿De que murió...,Cameron Jeffrey Wilson,Se disparó accidentalmente en los testiculos mientras escondía drogas en el ano
+218,Muertes,¿De que murió...,Prabhu Bhatara,Taxista indio que murio al intentar hacerse un selfie con un oso herido. Se hizo viral
+219,Muertes,¿De que murió...,Robert Overacker,Murio lanzandose en moto de agua por las cataratas del Niagara
+220,Muertes,¿De que murió...,Christoph Asniski,"En un pique con 4 colegas por quien tenía más cojones, terminó decapitandose con una motosierra"
+221,Muertes,¿De que murió...,Clifford Ray Jones,Tuvo un accidente de coche mientras veía porno y se masturbaba
+222,Muertes,¿De que murió...,Michael Gomes,"Adicto a ingerir alcohol por el ano, murió de exceso de alcohol al introducirse 3 litros de vino."
+223,Muertes,¿De que murió...,San Lorenzo,"Martir torturado en una parrilla gigante. Le dijo a sus verdugos mientras le asaban: 'Darme la vuelta, ya estoy hecho de este lado'"
+224,Muertes,¿De que murió...,Nombre Hawaiano,Fue asesinado a golpes con una Biblia.
+225,Muertes,¿De que murió...,Alan Pinkerton,Detective que tropezó con una acera de la calle y se mordió la lengua. Murió por gangrena
+226,Muertes,¿De que murió...,Nombre Iraki,Es el único humano que ha muerto por impacto de meteorito. Fue en un pueblo de Irak
+227,Muertes,¿De que murió...,Benjamin Taylor Bell,Murió cayendose por el hueco de un ascensor en Canada
+228,Muertes,¿De que murió...,Juan Mortensen,Murió ahogado en un charco de 15cm mientras cazaba patos
+229,Muertes,¿De que murió...,Franz Reichelt,Murió provando su paracaidas de tela
+230,Muertes,¿De que murió...,Thornton Jones,Se autodecapito mientras estaba sonambulo
+231,Muertes,¿De que murió...,bobby leach,Se le infectó la pierna despues de resbalar con una cascara de fruta
+232,Muertes,¿De que murió...,Thomas Mantell,Piloto americano que murió persiguiendo a un ovni
+233,Muertes,¿De que murió...,Albahaca Marrón,Murió despues de tomarse 35 litros de Zumo de Zanahoria
+234,Muertes,¿De que murió...,Roberto Williams,"Fue la primera persona del mundo asesinada por un robot, de un puñetazo en la cabeza"
+235,Muertes,¿De que murió...,Mónica Myers,Alcaldesa de un pueblo que cayó en un pozo de mierda de 5 metros 
+236,Muertes,¿De que murió...,David Grundman,Le mató un cactus en Arizona
+237,Muertes,¿De que murió...,Jimmy Ferrozzo,Murió asfixiado teniendo relaciones sexuales sobre un piano
+238,Muertes,¿De que murió...,Franco Brown,Murió en una carcel intentando tragarse una Biblia de bolsillo.
+239,Muertes,¿De que murió...,Edith Sola,Murió atropellada al ver como un caniche mataba a una anciana cayendose de una ventana
+240,Muertes,¿De que murió...,Bernd Brandes,"Asesinado por su dominatrix, despues de que esta le cortase el pene y se lo diera de comer."
+241,Muertes,¿De que murió...,Kenneth Pinyan,Murió por las heridas que le provocó tener sexo anal con un caballo
+242,Muertes,¿De que murió...,Mildred Bowman y Alice Wardle,Ancianas que quedaron atrapadas dentro de un sofa cama en Benidorm
+243,Muertes,¿De que murió...,Leah Johnson,Irlandesa que murio de una reacción alergica tras tener relaciones sexiales con un pastor aleman
+244,Muertes,¿De que murió...,Diane Durré        ,Se le cayó un cartel de Taco Bell en la cabeza
+245,Muertes,¿De que murió...,Taylor Mitchell,Es la unica persona del mundo asesinada por un coyote
+246,Muertes,¿De que murió...,Vladimir Lijonos,Murió cuando le exploto un chicle que había mojado en acido
+247,Muertes,¿De que murió...,Jose Luis Ochoa,Fue apuñalado en la pierna por un Gallo
+248,Muertes,¿De que murió...,Antonio Hensley,Fue asesinado por un cisne mientras montaba en kayak
+249,Muertes,¿De que murió...,James Campbell,Fue atropellado por un perro que conducía su furgoneta
+250,Muertes,¿De que murió...,Juan María de Souza,Fue aplastado por una vaca que atravesó su tejado
+251,Muertes,¿De que murió...,J.R.N.,"Borracho en una granja, Intentó tener sexo con una cerda que le mutilo los genitales y la cara"
+252,Muertes,¿De que murió...,Fan Peng,Chef chino al que le mordió una cobra que llevaba 20 minutos decapitada y que iba a empezar a cocinar
+253,Muertes,¿De que murió...,Esteban Whinfrey,Murió asfixiado cuando se le atascó la cabeza dentro de una madriguera de conejos
+254,Muertes,¿De que murió...,Esteban Woytack,"Estando en un cementerio, fue aplastado por la lapida de su suegra"
+255,Muertes,¿De que murió...,Lottie Michelle Belk,Una sombrilla de playa descontrolada le atravesó el pecho en Virginia
+256,Muertes,¿De que murió...,Julio Macías González,Se le engangrenó un chupeton en el cuello
+257,Muertes,¿De que murió...,Samen Kondorura,Se le cayó el ataud de su madre encima el día de su funeral
+258,Muertes,¿De que murió...,Darren Hickey,Murió despues de comer un trozo de pescado demasiado caliente en una boda
+259,Muertes,¿De que murió...,El Papa Juan XII,Recibió un martillazo en la cabeza cuando el marido de su amante le pilló follandose a su mujer
+260,Muertes,¿De que murió...,Anna Madison,Se electrocuto al ponerse unas pinzas de coche en los pezones mientras tenía sexo
+261,Muertes,¿De que murió...,Rumina Klarinsky,Se asfixió cuando se tragó el condon del hombre al que estaba realizando una felación
+262,Muertes,¿De que murió...,Hasebul Nehan,"Fue a Ikea con sus padres, se perdió y apareció muerto"
+263,Muertes,¿De que murió...,Mad Mike,Murió en un viaje que hizo en un cohete casero para demostrar que la tierra era plana
+264,Personajes,¿Quien es...,Antonio 'Diabloanton' González Robles.,Director del equipo de futbol de Indonesia Semen Padang FC
+265,Personajes,¿Quien es...,Walter Orthmann,"Con 100 años, obtuvo el record guiness por tabajar durante 84 años en una empresa de fabricación textil"
+266,Personajes,¿Quien es...,Daniel Kish,"Es un joven invidente que, para orientarse, chasquea la lengua escuchando como rebota el sonido a su alrededor"
+267,Personajes,¿Quien es...,Liew Thow Lin,Lin es capaz de engancharse cualquier objeto metalico a su cuerpo debido al alto nivel de fricción de su piel
+268,Personajes,¿Quien es...,Shi Liliang,Monje capaz de correr hasta 125 metros por encima del agua.
+269,Personajes,¿Quien es...,Liam Hoekstra,Es el niño más fuerte del mundo. A los diez años podía levantar los muebles de la casa
+270,Personajes,¿Quien es...,Roy Sullivan,Un americano que fue alcanzado por rayos 7 veces durante su vida. Una vez uno le cayó teniendo la ropa con su mujer
+271,Personajes,¿Quien es...,Costis Mitsotakis,El único habitante de un pueblo griego de 70 personas al que no le tocó la lotería de Navidad
+272,Personajes,¿Quien es...,Ivan Lester,"En 1988, salto en paracaidas con el pequeño pobrema de que olvidó abrocharselo"
+273,Personajes,¿Quien es...,Vlad Cazacu,Un rumano que provocó una terrible explosión tirandose un eructo en un circo
+274,Personajes,¿Quien es...,Ann Hodges,"Echandose una siesta en su sofá en Alabama, le cayó un meteorito en la cadera. "
+275,Personajes,¿Quien es...,John Cummings,Se quiso hacer el chulo imitando a un francés que se tragaba cuchilos. Murió
+276,Personajes,¿Quien es...,Karl Friedrich Canstatt,Medico aleman que curaba algunos trastornos sosteniendo una pata de paloma contra el ano de un niño.
+277,Personajes,¿Quien es...,Claude Martin,Se operó a si mismo de un de un calculo en la vegiga de forma exitosa
+278,Personajes,¿Quien es...,Crisipo de Solos,Murio de un ataque de risa tras ver a un burro comerse unos higos
+279,Personajes,¿Quien es...,José María García Urbano,Alcalde del PP que construyó el mítico tobogan de Estepona
+280,Personajes,¿Quien es...,Shanti Devi,India que a los cuatro años afirmó que sus padres no eran sus padres ya que recordaba perfectamente su vida pasada
+281,Personajes,¿Quien es...,Raphael Samuel,Joven que demandó a sus padres por haberle tenido sin su consentimiento
+282,Personajes,¿Quien es...,Roberto Arroyo,Joven que pasó tres horas chupando el telefonillo de una casa
+283,Personajes,¿Quien es...,Gurbanguly Malikguly Ogly Berdimuhamedov,Presidente de un pais asiático que para desmentir su muerte se puso a derrapar con un coche alrededor de un crater de lava
+284,Personajes,¿Quien es...,Maria del Carmen M.G,"Señora de avanzada edad que le corto la cabeza a su marido y se la entrego a su amante, diciendole que era una caja con jugetes sexuales"
+285,Personajes,¿Quien es...,Xulio Ferreiro,Politico que se sustituyó en un debate electoral por un monigote de plastico
+286,Personajes,¿Quien es...,David Barulia,"Record de tiempo registrado como abogado, con 71 años de profesión. Ganó un caso con 104 años"
+287,Personajes,¿Quien es...,Karl Henrich Ulrich,Primera persona en declararse públicamente como homosexual. Fue en un congreso de abogados alemanes
+288,Personajes,¿Quien es...,Victor Balaguer,Cantante que represento a españa en Eurovisión con su canción 'Llamamé'. Obtuvo 0 puntos
+289,Personajes,¿Quien es...,Maria Angeles Aranega,Es la vidente con mejor rating en Google de todo Alcobendas
+290,Personajes,¿Quien es...,Juan Jose Bautista Martin,"Presentador de televisión, más conocido como Juan y Medio."
+291,Personajes,¿Quien es...,Oscar García García,Paracaidista español que en un desfile del 12 de Octubre se quedó enganchado en una farola
+292,Personajes,¿Quien es...,Millard Fillmore,Presidente de los Estados Unidos del partido Whig
+293,Personajes,¿Quien es...,Madeline Albrecht,"Trabajando en un laboratorio de investigación, se estima que llego a olfatear unos 5600 pies"
+294,Personajes,¿Quien es...,Eduardo Fernández Navarro,Alcalde de Villanueva del pardillo representando al Partido Local de Villanueva del Pardillo
+295,Personajes,¿Quien es...,Brutus Beefcake,Luchador que en un vuelo soltó la mierda más grande del mundo. Provocó todo tipo de arcadas y vómitos entre el resto de pasajeros
+296,Personajes,¿Quien es...,Masanobu Sato,"Ganador del maratón de masturbación de 2009, estableciendo en 10 horas el record de paja más larga"
+297,Personajes,¿Quien es...,Anna Swan,Es una escocesa considerada oficialmente como la mujer con la vagina más grande del mundo (86 cm)
+298,Personajes,¿Quien es...,Horst Schultz,"Tiene el record de eyaculación con mayor alcance de la historia, con más de 5.5 metros. "
+299,Personajes,¿Quien es...,Sandra Reyes,Actriz colombiana que asegura haber sido secuestradas por extraterrestres en otro planeta
+300,Personajes,¿Quien es...,Hugo Lopez,"Argentino que tras muchos años de dedicación, consigió el record de número de pajas en un día. Se hizo 83"
+301,Personajes,¿Quien es...,Gerkary Blanco Blequett,Tiktoker capaz de chuparse el ojo con su propia lengua.
+302,Personajes,¿Quien es...,Henry Gunther,Soldado estadounidense conocido por ser el ultimo soldado en morir en la primera guerra mundial. Murió un minuto antes de su fin
+303,Personajes,¿Quien es...,Juan Jose Rueda,Banderillero granadino que recibió una cornada de dos trayectorias en el ano
+304,Personajes,¿Quien es...,Manuel Pacho,Compositor del himno del Partido popular
+305,Personajes,¿Quien es...,Valentina Vassilyeva,Es la mujer que ha parido más niños de la historia. Tiene 69 hijos
+306,Personajes,¿Quien es...,Juan Agustín Orozco y Pilar Herranz,Campeones de la feria de chotis de San Isidro.
+307,Personajes,¿Quien es...,Jesse Heiman,Es el extra gordito que sale en todas las peliculas
+308,Personajes,¿Quien es...,Andrew Schneider,"Es el inventor del Bikini con paneles solares, para que puedes cargar el movil mientras tomas el sol"
+309,Personajes,¿Quien es...,Mariano Castillo y Ocsiero,Es el creador del una publicación anual donde se da la preccion no cientifica de la meteorológica del año. Se llama el Calendario Zaragozano
+310,Personajes,¿Quien es...,Sophia Cheung,Es una influencer asiatica que murió al hacerse un selfie al borde de una cascada
+311,Personajes,¿Quien es...,Frank Lentini,"Es un italiano que nació con tres piernas, cuatro testiculos y dos penes completamente funcionales."
+312,Personajes,¿Quien es...,Estebanía de Valdaracete,Espadachina hermafrotida de un pueblo de Madrid que destaco en el siglo XIII por habilidades de combate
+313,Personajes,¿Quien es...,Pupano,Es un cantante punk-metal que sorprendió a todos en el diario de Patricia cantando GANGRENAAAAA
+314,Personajes,¿Quien es...,Jorge Monje,"Es el único español que vive en Butan, un pais perdido en mitad de Asia"
+315,Personajes,¿Quien es...,Romel el Libanes,"Es el dueño del mejor Kebab de Madrid, el 'Kebab House'"
+316,Personajes,¿Quien es...,Oskar Arngaden,Es considerado el sacerdote más guapo del mundo. Se parece mucho a Thor y es un apasionado del Crossfit
+317,Personajes,¿Quien es...,"Stanley ""Chipper"" Cooke",Fue el tercer clasificado de la sexta edición de Operación Triunfo
+318,Personajes,¿Quien es...,James Howells,Británico que tiró a la basura un ordenador con más de 315 millones de euros en Bitcoins.
+319,Personajes,¿Quien es...,Shane Sale,"Americano que cansado de estar esperando en el hospital a que le atendieran, robó una ambulancia para irse a su casa"
+320,Personajes,¿Quien es...,Manuel Blanco López,Creador de los Miguelitos de la Roda. Se llaman asi porque tenía un amigo que se llamaba Miguelito Ruiz al que le encantaban
+321,Personajes,¿Quien es...,Elizabeth Hoad,Cincuentona que tras más de 200 citas tinder fallidas decidió casarse con un Golden Retriever llamado Logan. Ella asegura que no está loca
+322,Personajes,¿Quien es...,Kohey Nishi,"Es el 'niño polla japones', una estrella del porno nipón que con treinta años tiene el aspecto de un niño de 10."
+323,Personajes,¿Quien es...,Lupita y Carmen Andrade,Son dos hermanas siamesas unidas de cintura para arriba. Lupita tiene novio y Carmen es asexual. Carmen está feliz porque su hermana está enamorada. Comparten genitales
+324,Personajes,¿Quien es...,Alberto Alvarez Sanchez,Es el autor del libro titulado 'Dialogos con mi polla'.
+325,Personajes,¿Quien es...,Bonnie Gooch,"Octogenaria estadounidense que fue detenida en Misuri tras asaltar una sucursal bancaria. Dejó una notá donde ponia 'Gracias y disculpa, no quería asustaros'"
+326,Personajes,¿Quien es...,Jonathan Jacob Meijer,"Musico de 41 años que tras donar semen en 13 clinicas, se cree que ha enjendrado ya a más de 550 niños. Ha sido demandado por aumentar el riesgo de incesto en Paises Bajos"
+327,Personajes,¿Quien es...,Cindy Lao,"Ama de casa inglesa, que tras tener un pescado durante 48 horas en el congelador, descubrió que seguía con vida"
+328,Personajes,¿Quien es...,Japala Roland,Recorrió casi medio kilometro envuelto en llamas mientras era arrastrado por un caballo
+329,Personajes,¿Quien es...,Roque José Florencio,Esclavo brasileño que se encargaba de fertilizar a las mujeres de su area debido a su tamaño
+330,Personajes,¿Quien es...,Sticky Vicky,Es una artista britanica que se hizo famosa por sacarse cuchillas de la vagina
+331,Personajes,¿Quien es...,Rhys Owen Jones y Keri Mules,"Secuestraron un pinguino llamado dirk, le metieron en la ducha y le terminaron abandonando en un parque"
+332,Personajes,¿Quien es...,Erandy Gutiérrez,Joven de Sinaloa que mato a su mejor amiga de 65 puñaladas por subir una foto al facebook en la que salía mal
+333,Personajes,¿Quien es...,Ashrita Furman,Consigió partir con el estomago 31 sandías en un minuto
+334,Personajes,¿Quien es...,Sri Oviyasena,Resolvió el cubo de rubki mientras sostenía 5 hula hoops.
+335,Personajes,¿Quien es...,Blanca Rosa Betancourt,Conocida como la 'Narcoabuela'. Era la lider de una banda de narcos colombiana. Se dedicaba a vender fentanilo en la puerta de colegios
+336,Personajes,¿Quien es...,Bridget Powers,Actriz porno con enanismo. Protagonizó peliculas como 'Bridget la enana' o 'Puta Muerta'
+337,Personajes,¿Quien es...,Jim Knowlton,Pintor americano famoso por el cuado 'Penes del reino animal'
+338,Personajes,¿Quien es...,James F. Nolan,Medico que se dedico a investigar el mejor metodo para tratar a un pene atrapado en una cremallera
+339,Personajes,¿Quien es...,Karl Kruszelnicki,"de la Universidad de Sídney, por realizar un examen general de la pelusa humana del ombligo."
+340,Personajes,¿Quien es...,Graham Barker,Ha estado coleccionando su propia pelusilla casi todos los días desde el 17 de enero de 1984
+341,Personajes,¿Quien es...,Kees Moeliker,Botanico que documentó el primer caso de necrofilia homosexual en patos.
+342,Personajes,¿Quien es...,Jilian Clarke,Investigo lo de que si algo que ha estado en el suelo menos de cinco segundos no está sucio y se puede comer. 
+343,Personajes,¿Quien es...,Donald y Frank Smith,"Patentaron la cortinilla, el peinado para calvos que pretende disimular la calva estirando el pelo que queda en los laterales."
+344,Personajes,¿Quien es...,Victor Benno Meyer-Rochow ,Famoso por calcular la presión que se acumula dentro de un pingüino en el proceso de defecación
+345,Personajes,¿Quien es...,Francis M. Fesmire,"Es el autor del informe ""Interrupción del hipo con un masaje rectal"""
+346,Personajes,¿Quien es...,Jose Luis Cabeza,"Sevillano que participo en la cabalgata de Sevilla con el rol de Baltasar, pintado de negro y vestido de torero"
+347,Personajes,¿Quien es...,Alexander Schindler,"Es un coach de seducción mexicano, experto en hacer ligar a feos a través de instagram"
+348,Personajes,¿Quien es...,Jose Nogales,Cantautor creador de la canción 'Dale Españita' reversionando en 1+1 son 7 de Fran Perea
+349,Personajes,¿Quien es...,Jacob Haugaard ,Politico escandinavo que propuso en el parlamento que IKEA tuviera más muebles renacentistas
+350,Personajes,¿Quien es...,Ilona Staller,Parlamentaria de origen hungaro que propuso tener relaciones sexuales a Saddam Hussein para acabar con la guerra
+351,idiomas,¿Como se dice en ZULU...,"Cuando me fui, funcionaba",Dāng wǒ líkāi shí tā zhèngzài gōngzuò
+352,idiomas,¿Como se dice en ZULU...,Me estas empezando a tocar los cojones,Usuqala ukuthinta amabhola ami
+353,idiomas,¿Como se dice en ZULU...,la tortilla española es siempre con cebolla,i-tortilla yaseSpain ihlale ino-anyanisi
+354,idiomas,¿Como se dice en ZULU...,la tortilla española es siempre sin cebolla,i-tortilla yaseSpain ihlale ingena-anyanisi
+355,idiomas,¿Como se dice en ZULU...,"ups, se me ha caído un pedo","eshu, ngithole ukuqunjelwa"
+356,idiomas,¿Como se dice en ZULU...,Picha española nunca mea sola,Udick waseSpain akalokothi achame yedwa
+357,idiomas,¿Como se dice en ZULU...,Es el vecino el que elige el alcalde y es el alcalde el que quiere que sean los vecinos el alcalde,Ngumakhelwane okhetha imeya futhi yiMeya efuna omakhelwane kube yimeya
+358,idiomas,¿Como se dice en ZULU...,¿Quieres sentirla en el Pecho?,Uyafuna ukuyizwa Esifubeni?
+359,idiomas,¿Como se dice en ZULU...,La he liado parda,Ngiyiphambanise ibe nsundu
+360,idiomas,¿Como se dice en ZULU...,de que son las bolitas que me salen en el ombligo?,Imaphi amabhola amancane aphuma esiswini sami?
+361,idiomas,¿Como se dice en ZULU...,"cariño te quiero, pero que mal me comes el coño","sthandwa ngikuthanda, kodwa indlela oyidla kabi ngayo ingquza yami"
+362,idiomas,¿Como se dice en ZULU...,tengo una teta mucho mas grande que la otra,Nginobhubhu omkhulu kakhulu kunomunye
+363,idiomas,¿Como se dice en ZULU...,"Por mi hija, mato","No kaʻu kaikamahine, pepehi wau"
+364,idiomas,¿Como se dice en CHINO...,"Paco, que ya tienes cincuenta años","Paco, nǐ yǐjīng wǔshí suìle"
+365,idiomas,¿Como se dice en CHINO...,Mi sueño es montar un todo a cien,Wǒ mèngxiǎng qí yī zhěng dào yībǎi
+366,idiomas,¿Como se dice en CHINO...,"Arroz tres delicias y un rollito, por favor",Nà yī zhuō mǐfàn sān yàng yī juàn
+367,idiomas,¿Como se dice en CHINO...,"que Gato mas bonito, mañana a la cazuela","Hǎo piàoliang de māo, míngtiān qù shāguō"
+368,idiomas,¿Como se dice en CHINO...,Hay una uña en mi plato,Wǒ de pánzi shàng yǒuyī kē dīngzi
+369,idiomas,¿Como se dice en CHINO...,Otro puto audio?,Lìng yīgè tā mā de yīnpín?
+370,idiomas,¿Como se dice en CHINO...,Como se nota que eres Piscis,Shuōmíng nǐ shì shuāngyú
+371,idiomas,¿Como se dice en CHINO...,"Hueles raro, pero me gusta","Nǐ wén qǐlái hěn qíguài, dàn wǒ xǐhuān"
+372,idiomas,¿Como se dice en CHINO...,Es pequeñita pero juguetona,Tā hěn xiǎo dàn hěn ài wán
+373,idiomas,¿Como se dice en CHINO...,"Agente, solo fue una cerveza","Tègōng, zhè zhǐshì yībēi píjiǔ."
+374,Películas,¿De que va la película...,"Jo, ¡qué noche!","Un informático pierde el ultimo metro por ir intentar ligar. Se queda tirado y tras pasar muchas penurias durante la noche, consigue volver a su oficina"
+375,Películas,¿De que va la película...,"Yo, un negro","Un grupo de jóvenes emigrantes de Níger, son grabados interpretando su propio papel."
+376,Películas,¿De que va la película...,"Corre Lola, Corre","Una joven recibe una llamada de su novio, tras perder una fortuna que pertenece a un mafioso. Morirá si Lola no consigue el dinero en veinte minutos"
+377,Películas,¿De que va la película...,El primer dia en el trabajo,Un documental sobre los sangrientos peligros que tiene el conducir un montacargas dentro de un almacén
+378,Películas,¿De que va la película...,Mi amigo Mac,Es como ET pero con el niño siendo paralitico
+379,Películas,¿De que va la película...,Delicatessen,Los clientes de un amable carnicero son asesinados y convertidos en comida
+380,Películas,¿De que va la película...,La tia Tula,"Una mojigata se ve obligada a vivir con su cuñado, por el que siente una atracción sexual imparable"
+381,Películas,¿De que va la película...,La teta y la luna,Un niño obsesionado con los pechos de su madre viaja a Francia para encontrar la teta perfecta.
+382,Películas,¿De que va la película...,El Bebé de Macon,Una familia noble finge tener un hijo santo para ocultar la desvirgación de la madre y para ganar riqueza y poder
+383,Películas,¿De que va la película...,Society,Un adolescente sospecha que su adinerada familia está involucrada en orgías
+384,Películas,¿De que va la película...,Bella de dia,Una esposa de clase alta se hace en prostituta durante el día para explorar su sexualidad reprimida
+385,Películas,¿De que va la película...,Aquí huele a muerto… ¡Pues yo no he sido!,"Un arruinado conde y su criado, viajan a Turquía a reclamar la herencia de su difunto tío. Pero para conseguir la fortuna deberá enfrentarse a la maldición que pesa sobre el castillo familiar."
+386,Películas,¿De que va la película...,Policía,"Gumer, se mete en la policia obligado por su tío. A la que empieza a meterse en peleas, le coge gusto a la profesión"
+387,Películas,¿De que va la película...,La Hoz y el Martinez,"Un diplomatico sovietico sufre un atentado. El embajador de ruso decide que el alto cargo debe ser reemplazado por el fontanero madrileño, Juan Martinez"
+388,Películas,¿De que va la película...,Chechu y su familia,"Chechu sueña con dejar de ser un niño, y cree que sólo lo logrará perdiendo su virginidad con una doncella, pero su novio no está de acuerdo. Y su familia, tampoco"
+389,Películas,¿De que va la película...,Esta noche no,"Luis, tras cumplir condena en prisión, sale a buscar a Rita. El problema es que rita ya está enamorada de otro hombre"
+390,Películas,¿De que va la película...,Fanny Pelopaja,Un policía mantiene una relación sadomasoquista con la prostituta Fanny Pelopaja. Fanny termina buscando venganza
+391,Películas,¿De que va la película...,"Y del seguro... líbranos, Señor!",A un actor le da un ataque al corazón. Los medicos sospechan que en realidad se trata de un inspector de Sanidad
+392,Películas,¿De que va la película...,A mí las mujeres ni fu ni fa,"Pedro se enamora de una joven que sale con un psiquiatra. Para acceder a ella, acude a la consulta con la excusa de no sentir atracción por las mujeres"
+393,Películas,¿De que va la película...,El pisito,Rodolfo y Petra son una pareja de recien casados que no puede vivir juntos porque la vivienda está carisima. Rodolfo intenta liarse con una anciana a punto de morir para quedarse con su pisito
+394,Películas,¿De que va la película...,El Tigre de Chamberi,"Un tartamudo de Chamberí noquea sin querer a un campeon de boxeo. El tartamudo aprovecha la ocasión para hacerse boxeador y ligarse a Marisa, la hija de su manager"
+395,Películas,¿De que va la película...,El planeta de las mujeres invasoras,"Procedentes de un planeta habitado sólo por mujeres guerreras, aterriza en México una nave espacial con un grupo de sexys alienígenas"
+396,Películas,¿De que va la película...,"Hola, mi nombre es Doris","Un seminario de autoayuda inspira a Doris, una mujer sesentañera, para perseguir románticamente a su joven y nuevo compañero de trabajo."
+397,Películas,¿De que va la película...,Estamos muertos...¿O que?,Dos policías de Los Ángeles descubren un laboratorio de drogas en donde los criminales muertos son resucitados.
+398,Películas,¿De que va la película...,Tuno negro,Un asesino psicópata se infiltra en una tuna universitaria y comienza a asesinar a los estudiantes que sacan las peores notas de la clase
+399,Películas,¿De que va la película...,La parada de los monstruos,Un circo se rompe cuando uno de los enanos es seducido por una atractiva trapecista
+400,Películas,¿De que va la película...,La Lola nos lleva al huerto,Ataulfo y Paco se infiltran en una secta religiosa para poder preguntar a Lola cual de los dos es el padre de su hijo
+401,Películas,¿De que va la película...,Amazonas para dos aventureros,"En medio del Amazonas, dos exploradores europeos, Jim y Jeff acaban en manos de una tribu de indigenas que les castigan con extraños ritos de coquetería"
+402,Películas,¿De que va la película...,Un año sin amor,"Un hombre con sida, se introduce en practicas sadomasoquistas con el objetivo de encontrar un amor verdadero"
+403,Películas,¿De que va la película...,Homenaje a la hora de la siesta,"Las viudas de 4 misioneros asesinados por indigenas, viajan a la selva a homenajearles. Alli descubren que 3 de ellos siguen vivos"
+404,Películas,¿De que va la película...,El hombre de las sorpresas,Un hombre se hace el muerto y su ultima voluntad es que su esposa se case con un vagabundo y pierda su herencia
+405,Películas,¿De que va la película...,Toda casa tendría que tener una,"Ted es el publicista de un producto horrible, asi que le añade erotismo a sus anuncios. Esto complica mucho su relación de pareja"
+406,Películas,¿De que va la película...,Buenos días,Dos niños en Japón permanecen en silencio hasta que sus padres les compran un aparato de televisión.
+407,Películas,¿De que va la película...,Un hombre llamado Flor de Otoño,Luis lleva una doble vida. Por el día es y por la noche trabaja como cantante transformista en un cabaret con el nombre artístico de Flor de Otoño. 
+408,Películas,¿De que va la película...,Secuencia,Un hombre se despierta y cuando sale a la calle se da cuenta de que todo el mundo a tenido una pesadilla con el esa noche
+409,Películas,¿De que va la película...,Virunga,Un grupo de progres arriesgan sus vidas para salvar a los últimos gorilas del Congo
+410,Películas,¿De que va la película...,Lisístrata,"En medio de la guerra, las mujeres de Atenas y Esparta se declaran en huelga de sexo hasta que los hombres deciden dejar sus diferencias de lado"
+411,Películas,¿De que va la película...,Almejas y mejillones,Un biologo marino se enamora de su okupa. Luego se da cuanta de que ella es lesbiana
+412,Películas,¿De que va la película...,El inquilino,"Un alienígena despistado, navegando por el espacio en busca de su planeta termina, por error, en Madrid"
+413,Películas,¿De que va la película...,Sex o no sex,"Paco Jimenez, un aburrido oficinista, empieza a sentir un fuego sexual inapagable. Primero lo soluciona haciendose voyeur y exhibicionista. Luego se lo cuenta a su mujer"
+414,Películas,¿De que va la película...,El virgo de Visanteta,Una especie de fuerza divina sobrenatural ayuda a la joven Visanteta cada vez que está a punto de ser desvirgada.
+415,Películas,¿De que va la película...,El erótico enmascarado,"Un profesor de ciencias políticas, ex actor de películas porno, sufre de impotencia  a causa de un accidente"
+416,Películas,¿De que va la película...,Es peligroso casarse a los 60,Mariano es un soltero sesentón que decide casarse para tener un hijo que herede su negocio de autocares.
+417,Películas,¿De que va la película...,¡Que vienen los socialistas!,"Las elecciones provocan una gran conmoción en un pueblito, ya que todo apunta a que ganará el PSOE"
+418,Películas,¿De que va la película...,La descarriada,"Nati, una joven prostituta, trabaja en un club nocturno para sacar adelante a sus hermanos. Tiene deudas"
+419,Películas,¿De que va la película...,El currante,"Manolo es un pluriempleado nato: albañil, fontanero. Todo mientras cobra el paro y educa a su hijo"
+420,Películas,¿De que va la película...,Amor a la española,"Paco, Patricio y Rafa viven escarceos amorosos con las turistas extranjeras en el Torremolinos de sol y playa"
+421,Películas,¿De que va la película...,No es bueno que el hombre esté solo,"Martín es solitario e introvertido. Vive aislado con Elena, una muñeca a la que trata como si fuera su esposa"
+422,Películas,¿De que va la película...,Lo verde empieza en los Pirineos,Don Serafín viaja a Francia con la intención de disfrutar de las orgías y desnudos de las playas de Biarritz
+423,Películas,¿De que va la película...,Habla mudita,"Ramiro se enamora de una muda y, convencido de que si se esfuerza mucho, conseguira que la muda hable"
+424,Películas,¿De que va la película...,Mi marido y sus complejos,Un matrimonio conservador acoge en su hogar a una escultural criada sueca. El marido acaba desquiciado
+425,Películas,¿De que va la película...,El Cid Cabreador,"Tras ser maldecido, El Cid reconquista Valencia mediante paellas  y con una fallera streaper"
+426,Películas,¿De que va la película...,"Charly, días de sangre","Charly intenta pasar un finde tranquilo, pero es amenazado por un asesino en serie y por la inflación"
+427,Películas,¿De que va la película...,El estafador,Un hombre rico y dominado finge  estar enfermo para conseguir que su hija no se case con un estafador
+428,Películas,¿De que va la película...,El alegre divorciado,"Un matrimonio de maduros viaja a México. Harto de los cuidados de su mujer, el hombre le pide el divorcio"
+429,Películas,¿De que va la película...,"Camas blandas, batallas duras",Un grupo de prositutas en Francia se dedican a matar a los soldados nazis que frecuentan su puticlub
+430,Películas,¿De que va la película...,"¡Oh papá, pobre papá, mamá te ha metido en el armario y a mi me da tanta pena!",Una mujer se va con su hijo y su marido muerto y disecado a pasar unos dias de descanso y relajación a la playa
+431,Películas,¿De que va la película...,Adiós cariño,"Nicolás planea matar a su mujer, pero pronto descubre que ella está planeando exactamente lo mismo"
+432,Películas,¿De que va la película...,El cinturón de castidad,"Un soldado es llamado a la guerra justo el día que iba a tener sexo por primera vez con su esposa. Por precaución, ella le deja irse pero llevando un cinturón de castidad"
+433,Películas,¿De que va la película...,Conviene hacer bien el amor,"En una crisis global energética, unos científicos consiguen crear electricidad de los impulsos sexuales"
+434,Películas,¿De que va la película...,Es mi marido y lo mato cuando quiero,"Para poder casarse, dos jóvenes amantes deciden deshacerse del anciano marido de la mujer"
+435,Películas,¿De que va la película...,La aventura de los paraguas asesinos,Tres agentes buscan dar captura a una terrible organización que busca acabar con el mundo alterando el clima
+436,Películas,¿De que va la película...,Un león en mi cama,"Es la historia de Daniel, un joven que intenta demostrar a sus amigos que puede domesticar a un león salvaje"
+437,Películas,¿De que va la película...,Los extremeños se tocan,Un turco excéntrico ve en un extremeño el alma paralela que todos tenemos en algún lugar del mundo
+438,Películas,¿De que va la película...,Extermineitors 3: La gran pelea final,"Los extermineitors, unos americanos jubilados, luchan contra un soldado mejorado con implantes tecnológicos"
+439,Películas,¿De que va la película...,"Howard, un nuevo héroe",Un pato llega a la Tierra por error. Tiene un traje que le da una fuerza sobrehumana y lanzallamas en los brazos
