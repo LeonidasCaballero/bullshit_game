@@ -1,9 +1,8 @@
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound, subscribeToVotes } from "../../lib/supabase";
-import { ArrowLeft, Timer, ChevronLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
 // Add this with other interfaces
@@ -96,8 +95,8 @@ export const GameRound = (): JSX.Element => {
 
   const hasProcessedVotes = useRef(false);
 
-  // Añadir esta declaración al inicio con los otros estados
-  const [totalScores, setTotalScores] = useState<Record<string, number>>({});
+  // Usar solo el setter del estado
+  const [, setTotalScores] = useState<Record<string, number>>({});
 
   // Modificar el InsultPopup para hacerlo más bonito y añadir el nombre del moderador
   const InsultPopup = () => (
@@ -892,7 +891,6 @@ export const GameRound = (): JSX.Element => {
   }, [gameId]);
 
   // IMPORTANTE: Solo usar totalScores después de su declaración
-  const memoizedTotalScores = useMemo(() => totalScores, [totalScores]);
 
   // Primero necesitamos una función para calcular los puntos
   const calculateScores = useCallback(() => {
@@ -1285,28 +1283,43 @@ export const GameRound = (): JSX.Element => {
 
           {/* Lista de opciones de respuesta */}
           <div className="space-y-3">
-            {shuffledAnswers.map((answer, index) => (
-              <div 
+            {shuffledAnswers.map((answer, index) => {
+              // Determinar si esta respuesta es del usuario actual
+              const isOwnAnswer = answer.playerId === currentPlayer?.id;
+
+              return (
+                <div 
                   key={index}
-                className={`
-                  bg-white rounded-[15px] p-4 border-2 transition-all
-                  ${selectedVote === answer.content 
-                    ? 'border-[#CB1517]' 
-                    : hasVoted 
-                      ? 'border-transparent opacity-50' 
-                      : 'border-transparent hover:border-[#CB1517] cursor-pointer'
-                  }
-                `}
-                onClick={() => !hasVoted && handleVote(answer.content)}
-              >
-                <p 
-                  className="text-[#131309] text-lg"
-                  style={{ fontFamily: 'Caveat, cursive' }}
+                  className={`
+                    bg-white rounded-[15px] p-4 border-2 transition-all
+                    ${selectedVote === answer.content 
+                      ? 'border-[#CB1517]' 
+                      : hasVoted 
+                        ? 'border-transparent opacity-50' 
+                        : isOwnAnswer
+                          ? 'border-[#E7E7E6] opacity-70 cursor-not-allowed' 
+                          : 'border-transparent hover:border-[#CB1517] cursor-pointer'
+                      }
+                  `}
+                  onClick={() => !hasVoted && !isOwnAnswer && handleVote(answer.content)}
                 >
-                    {answer.content}
-                  </p>
-              </div>
-            ))}
+                  <div className="flex justify-between items-center">
+                    <p 
+                      className="text-[#131309] text-lg"
+                      style={{ fontFamily: 'Caveat, cursive' }}
+                    >
+                      {answer.content}
+                    </p>
+                    
+                    {isOwnAnswer && (
+                      <span className="text-sm text-gray-500 italic">
+                        (Tu respuesta)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -1356,13 +1369,13 @@ export const GameRound = (): JSX.Element => {
     // Las puntuaciones ya están en el estado, no necesitamos recalcularlas aquí
     const totalScores = calculateTotalScores();
 
-  return (
-    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+    return (
+      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-        BULLSHIT
-      </h1>
-      
-      <p className="text-[#131309] text-xl mt-4">
+          BULLSHIT
+        </h1>
+        
+        <p className="text-[#131309] text-xl mt-4">
           RONDA {round.number}
         </p>
 
@@ -1394,9 +1407,6 @@ export const GameRound = (): JSX.Element => {
                 const isCurrentPlayer = player.id === currentPlayer?.id;
                 const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
                 const isCorrectVote = playerVote === question?.correct_answer;
-                const totalPoints = typeof totalScores === 'object' && !totalScores.then 
-                  ? (totalScores[playerId] || 0) 
-                  : 0;
                 
                 // Determinar el estilo de borde para el jugador actual
                 let borderStyle = '';
@@ -1443,9 +1453,6 @@ export const GameRound = (): JSX.Element => {
                       <div className="flex flex-col items-end">
                         <div className="bg-[#9FFF00] px-3 py-1 rounded-full font-bold">
                           +{points} pts
-                        </div>
-                        <div className="text-sm mt-1">
-                          Total: {totalPoints + points} pts
                         </div>
                       </div>
                     </div>
@@ -1790,16 +1797,26 @@ export const GameRound = (): JSX.Element => {
           ) : (
             <>
               {question && (
-                <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
-                  <div className="space-y-4">
-                    <div className="bg-[#131309] rounded-[20px] p-6">
-                      <p className="text-white text-xl text-center">
+                <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-4 p-4">
+                  <div className="space-y-2">
+                    <div className="bg-[#131309] rounded-[15px] p-3">
+                      <p className="text-white text-base text-center">
                         {question.text}
                       </p>
                     </div>
 
-                    <div className="bg-white rounded-[20px] p-4">
-                      <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+                    <div className="bg-white rounded-[15px] p-3">
+                      <p 
+                        className="[font-family:'Londrina_Solid'] text-center text-[#131309]"
+                        style={{
+                          fontSize: question.content.length > 50 
+                            ? question.content.length > 100 
+                              ? '24px' 
+                              : '32px' 
+                            : '40px',
+                          lineHeight: question.content.length > 50 ? '1.2' : '1.3'
+                        }}
+                      >
                         {question.content}
                       </p>
                     </div>
@@ -1887,9 +1904,12 @@ export const GameRound = (): JSX.Element => {
                             
                             <span className="relative z-10 text-white">Insulta al resto</span>
                           </Button>
-                          <p className="text-[#131309] text-xl font-bold mb-4">
+                          
+                          {/* Modificar este texto */}
+                          <p className="text-[#131309] text-base mb-4 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
                             Quedan {pendingPlayers.length} jugadores por responder:
                           </p>
+                          
                           <div className="w-full space-y-2 mb-4">
                             {pendingPlayers.map(player => (
                               <div 

@@ -2,18 +2,24 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import type { Game } from "../../lib/types";
+
+interface LocationState {
+  isCreator?: boolean;
+  gameName?: string;
+}
 
 export const JoinGame = (): JSX.Element => {
   const navigate = useNavigate();
   const { gameId } = useParams();
+  const location = useLocation() as { state: LocationState };
   const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
   const [game, setGame] = useState<Game | null>(null);
 
-  // Añadir información sobre si es el creador
+  // Ahora podemos acceder a state con tipado correcto
   const isCreator = location.state?.isCreator;
   const gameName = location.state?.gameName;
 

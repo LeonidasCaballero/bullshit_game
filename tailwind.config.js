@@ -118,6 +118,10 @@ module.exports = {
             boxShadow: '0 0 16px 4px rgba(255,87,0,0.7), 0 0 0 8px rgba(255,87,0,0)' 
           }
         },
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -128,6 +132,7 @@ module.exports = {
         exitRight: 'exitRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         'flicker': 'flicker 2s ease-in-out infinite alternate',
         'fire-border': 'fireBorder 2s ease-in-out infinite',
+        'fade-in': 'fadeIn 0.5s ease-out',
       },
     },
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },

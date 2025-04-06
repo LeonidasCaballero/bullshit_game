@@ -2,8 +2,9 @@ export interface Game {
   id: string;
   name: string;
   created_at: string;
+  creator_id: string;
   started: boolean;
-  current_round_id: string | null;
+  current_round_id?: string;
 }
 
 export interface Player {

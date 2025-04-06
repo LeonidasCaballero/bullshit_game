@@ -1,8 +1,8 @@
 import { Button } from "../../components/ui/button";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { Users, ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import type { Player, Game } from "../../lib/types";
 import { initializeGameQuestions, getQuestionForRound } from '../../services/questionService';
 
@@ -20,6 +20,9 @@ export const GameLobby = (): JSX.Element => {
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
   const [isStartingGame, setIsStartingGame] = useState(false);
   const playerName = location.state?.playerName;
+  const [showPresenta, setShowPresenta] = useState(false);
+  const [showGameName, setShowGameName] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   useEffect(() => {
     if (!gameId || !playerName) return;
@@ -156,6 +159,11 @@ export const GameLobby = (): JSX.Element => {
 
   const handleStartGame = async () => {
     try {
+      if (!gameId) {
+        console.error('GameId is undefined');
+        return;
+      }
+
       setIsStartingGame(true);
       
       // 1. Inicializar preguntas para el juego
@@ -233,31 +241,27 @@ export const GameLobby = (): JSX.Element => {
     }
   };
 
-  const checkGameStatus = async () => {
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/join/${gameId}`;
+    
     try {
-      // En lugar de buscar rondas activas, obtener la ronda más reciente
-      const { data: latestRound } = await supabase
-        .from('rounds')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (latestRound) {
-        // Usar la ronda más reciente para determinar el estado del juego
-        navigate(`/game/${gameId}/round/intro`, {
-          state: {
-            roundId: latestRound.id,
-            roundNumber: latestRound.number,
-            moderatorId: latestRound.moderator_id,
-            playerName: location.state?.playerName,
-            category: latestRound.category
-          }
+      // Intentar usar la API Web Share si está disponible
+      if (navigator.share) {
+        await navigator.share({
+          title: `Únete a ${game?.name} en BULLSHIT`,
+          text: '¡Únete a nuestra partida de BULLSHIT!',
+          url: shareUrl
         });
+      } else {
+        // Si Web Share no está disponible, copiar al portapapeles
+        await navigator.clipboard.writeText(shareUrl);
+        setShowSnackbar(true);
+        setTimeout(() => {
+          setShowSnackbar(false);
+        }, 3000);
       }
     } catch (error) {
-      console.error('Error checking game status:', error);
+      console.error('Error compartiendo:', error);
     }
   };
 
@@ -271,6 +275,24 @@ export const GameLobby = (): JSX.Element => {
     console.log('Jugadores:', players);
     console.log('========================');
   }, [currentPlayerId, game, players]);
+
+  // Efecto para controlar la secuencia de animación
+  useEffect(() => {
+    // Mostrar "presenta a..." después de 500ms
+    const presentaTimer = setTimeout(() => {
+      setShowPresenta(true);
+    }, 500);
+
+    // Mostrar el nombre del juego después de 1000ms
+    const gameNameTimer = setTimeout(() => {
+      setShowGameName(true);
+    }, 1000);
+
+    return () => {
+      clearTimeout(presentaTimer);
+      clearTimeout(gameNameTimer);
+    };
+  }, []);
 
   if (error) {
     return (
@@ -306,25 +328,31 @@ export const GameLobby = (): JSX.Element => {
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
       <>
-        <div className="text-xs text-gray-500 mt-8">
-          ID: {currentPlayerId?.substring(0, 8)}... | Creador: {game?.creator_id?.substring(0, 8)}...
-        </div>
-        
-        {String(currentPlayerId) === String(game?.creator_id) && (
-          <div className="px-3 py-1 bg-[#131309] rounded-md text-white text-sm font-medium mt-1 mb-1">
-            Creador
-          </div>
-        )}
-        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-2">
+        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-2 animate-fade-in">
           BULLSHIT
         </h1>
       </>
       
-      <p className="text-[#131309] text-xl mt-2">
+      <p 
+        className={`
+          text-[#131309] text-xl mt-0 
+          transition-opacity duration-500 
+          ${showPresenta ? 'opacity-100' : 'opacity-0'}
+        `}
+      >
         presenta a...
       </p>
 
-      <h2 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-4 text-center">
+      <h2 
+        className={`
+          [font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-1 text-center
+          transition-all duration-500
+          ${showGameName 
+            ? 'opacity-100 transform translate-y-0' 
+            : 'opacity-0 transform translate-y-4'
+          }
+        `}
+      >
         {game?.name?.toUpperCase()}
       </h2>
 
@@ -333,7 +361,10 @@ export const GameLobby = (): JSX.Element => {
           <p className="text-[#131309] text-xl">
             {players.length} {players.length === 1 ? 'jugador' : 'jugadores'} en la partida
           </p>
-          <button className="text-[#131309]">
+          <button 
+            className="text-[#131309] hover:text-[#131309]/70 transition-colors"
+            onClick={handleShare}
+          >
             <Share2 className="w-6 h-6" />
           </button>
         </div>
@@ -396,59 +427,12 @@ export const GameLobby = (): JSX.Element => {
           </Button>
         )}
       </div>
+
+      {showSnackbar && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#131309] text-white px-4 py-3 rounded-lg shadow-lg z-50">
+          Link copiado bro
+        </div>
+      )}
     </div>
   );
 };
-
-// Función para mapear categorías
-const mapQuestionCategory = (category: string): string => {
-  if (!category) return 'Peliculas'; // Valor por defecto si no hay categoría
-  
-  // Normalizar la categoría (minúsculas, sin espacios)
-  const normalizedCategory = category.toLowerCase().trim();
-  
-  // Mapa de conversión más exhaustivo
-  const categoryMap: {[key: string]: string} = {
-    'pelicula': 'Peliculas',
-    'película': 'Peliculas',
-    'peliculas': 'Peliculas',
-    'películas': 'Peliculas',
-    'film': 'Peliculas',
-    'sigla': 'Siglas',
-    'siglas': 'Siglas',
-    'acronimo': 'Siglas',
-    'acrónimo': 'Siglas',
-    'personaje': 'Personajes',
-    'personajes': 'Personajes',
-    'character': 'Personajes',
-    'palabra': 'Palabras',
-    'palabras': 'Palabras',
-    'word': 'Palabras',
-    'muerte': 'Muertes',
-    'muertes': 'Muertes',
-    'death': 'Muertes',
-    'idioma': 'Idiomas',
-    'idiomas': 'Idiomas',
-    'language': 'Idiomas'
-  };
-  
-  // Devolver categoría mapeada o un valor por defecto si no hay coincidencia
-  return categoryMap[normalizedCategory] || 'Peliculas';
-};
-
-// Función para normalizar categorías (eliminar acentos)
-function normalizeCategory(category: string): string {
-  if (!category) return 'Peliculas';
-  
-  // Mapeo directo de categorías con acentos a categorías sin acentos
-  const categoryMap: {[key: string]: string} = {
-    'Películas': 'Peliculas',
-    'Siglas': 'Siglas', // Misma categoría sin acento
-    'Personajes': 'Personajes',
-    'Palabras': 'Palabras',
-    'Muertes': 'Muertes',
-    'Idiomas': 'Idiomas'
-  };
-  
-  return categoryMap[category] || 'Peliculas'; // Valor predeterminado si no coincide
-}
