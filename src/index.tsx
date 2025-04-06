@@ -11,7 +11,6 @@ import { GameScores } from "./screens/GameScores";
 import { NextRound } from "./screens/NextRound";
 import { Login } from "./screens/Login";
 import { SignUp } from "./screens/SignUp";
-import { ValidateCode } from "./screens/ValidateCode";
 import { SupabaseProvider } from "./contexts/SupabaseContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -27,8 +26,7 @@ createRoot(document.getElementById("app") as HTMLElement).render(
             
             {/* Rutas de autenticación */}
             <Route path="/login" element={<Login />} />
-            <Route path="/validate-code" element={<ValidateCode />} />
-            <Route path="/signup/:token" element={<SignUp />} />
+            <Route path="/signup" element={<SignUp />} />
             
             {/* Ruta protegida para crear juego */}
             <Route path="/create-game" element={

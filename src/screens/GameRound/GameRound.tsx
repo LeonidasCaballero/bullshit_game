@@ -1368,13 +1368,13 @@ export const GameRound = (): JSX.Element => {
   if (round?.results_phase) {
     // Las puntuaciones ya están en el estado, no necesitamos recalcularlas aquí
 
-    return (
-      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+  return (
+    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-          BULLSHIT
-        </h1>
-        
-        <p className="text-[#131309] text-xl mt-4">
+        BULLSHIT
+      </h1>
+      
+      <p className="text-[#131309] text-xl mt-4">
           RONDA {round.number}
         </p>
 

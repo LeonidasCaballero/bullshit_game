@@ -85,7 +85,7 @@ export const Login = () => {
 
             <p className="text-center text-sm mt-4">
               ¿No tienes cuenta? {" "}
-              <Link to="/validate-code" className="text-[#CB1517] hover:underline">
+              <Link to="/signup" className="text-[#CB1517] hover:underline">
                 Regístrate
               </Link>
             </p>
