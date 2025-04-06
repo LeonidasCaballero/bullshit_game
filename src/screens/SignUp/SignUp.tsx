@@ -1,16 +1,43 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 
 export const SignUp = () => {
   const navigate = useNavigate();
+  const { token } = useParams();
+  const [isValidToken, setIsValidToken] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        navigate('/validate-code');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('access_codes')
+        .select('*')
+        .eq('signup_token', token)
+        .single();
+
+      if (error || !data || data.is_used || 
+          new Date(data.signup_token_expires_at) < new Date()) {
+        navigate('/validate-code');
+        return;
+      }
+
+      setIsValidToken(true);
+    };
+
+    validateToken();
+  }, [token, navigate]);
 
   const handleSignUp = async () => {
     // Validaciones iniciales
@@ -68,6 +95,15 @@ export const SignUp = () => {
       }
 
       if (signUpData.user) {
+        // Marcar el código como usado
+        await supabase
+          .from('access_codes')
+          .update({ 
+            is_used: true,
+            used_at: new Date().toISOString()
+          })
+          .eq('signup_token', token);
+
         console.log('✅ Usuario creado exitosamente:', {
           email,
           username: username.trim()
@@ -84,6 +120,10 @@ export const SignUp = () => {
       setIsLoading(false);
     }
   };
+
+  if (!isValidToken) {
+    return null; // O un loader
+  }
 
   return (
     <div className="bg-black min-h-screen flex justify-center">
