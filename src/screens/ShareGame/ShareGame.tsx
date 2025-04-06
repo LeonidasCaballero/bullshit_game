@@ -14,6 +14,7 @@ export const ShareGame = (): JSX.Element => {
   const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSnackbar, setShowSnackbar] = useState<boolean>(false);
   
   const gameName = location.state?.gameName || "Partida";
   const gameUrl = `${window.location.origin}/game/${gameId}`;
@@ -63,7 +64,10 @@ export const ShareGame = (): JSX.Element => {
     try {
       await navigator.clipboard.writeText(gameUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setShowSnackbar(true);
+      setTimeout(() => {
+        setShowSnackbar(false);
+      }, 3000);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -156,6 +160,11 @@ export const ShareGame = (): JSX.Element => {
           </div>
         </div>
       </div>
+      {showSnackbar && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#131309] text-white px-4 py-3 rounded-lg shadow-lg z-50">
+          Link copiado bro
+        </div>
+      )}
     </div>
   );
 };

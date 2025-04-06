@@ -1356,13 +1356,13 @@ export const GameRound = (): JSX.Element => {
     // Las puntuaciones ya están en el estado, no necesitamos recalcularlas aquí
     const totalScores = calculateTotalScores();
 
-    return (
-      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+  return (
+    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-          BULLSHIT
-        </h1>
-        
-        <p className="text-[#131309] text-xl mt-4">
+        BULLSHIT
+      </h1>
+      
+      <p className="text-[#131309] text-xl mt-4">
           RONDA {round.number}
         </p>
 
@@ -1394,7 +1394,9 @@ export const GameRound = (): JSX.Element => {
                 const isCurrentPlayer = player.id === currentPlayer?.id;
                 const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
                 const isCorrectVote = playerVote === question?.correct_answer;
-                const totalPoints = totalScores[playerId] || 0;
+                const totalPoints = typeof totalScores === 'object' && !totalScores.then 
+                  ? (totalScores[playerId] || 0) 
+                  : 0;
                 
                 // Determinar el estilo de borde para el jugador actual
                 let borderStyle = '';
@@ -1705,8 +1707,8 @@ export const GameRound = (): JSX.Element => {
                       className="text-[#131309] text-2xl"
                       style={{ fontFamily: 'Caveat, cursive' }}
                     >
-                      {shuffledAnswers[currentAnswerIndex].content}
-                    </p>
+                  {shuffledAnswers[currentAnswerIndex].content}
+                </p>
                   </div>
                 </div>
               </div>
