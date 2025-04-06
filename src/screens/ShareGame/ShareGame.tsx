@@ -1,9 +1,9 @@
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Copy, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Copy } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import type { Game } from "../../lib/types";
 
@@ -11,12 +11,11 @@ export const ShareGame = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const { gameId } = useParams();
-  const [copied, setCopied] = useState(false);
+  const [, setCopied] = useState(false);
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSnackbar, setShowSnackbar] = useState<boolean>(false);
   
-  const gameName = location.state?.gameName || "Partida";
   const gameUrl = `${window.location.origin}/game/${gameId}`;
 
   useEffect(() => {

@@ -10,6 +10,46 @@ import { initializeGameQuestions, getQuestionForRound } from '../../services/que
 const getAvatarUrl = (seed: string) => 
   `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
 
+// Añadir esta función para mapear categorías
+const mapCategory = (questionCategory: string): string => {
+  // Normalizar la categoría (quitar acentos, minúsculas, etc.)
+  const normalized = questionCategory?.trim()?.toLowerCase() || '';
+  
+  // Mapear a las categorías permitidas
+  switch (normalized) {
+    case 'pelicula':
+    case 'peliculas':
+    case 'películas':
+    case 'película':
+      return 'Peliculas';
+      
+    case 'sigla':
+    case 'siglas':
+      return 'Siglas';
+      
+    case 'personaje':
+    case 'personajes':
+      return 'Personajes';
+      
+    case 'palabra':
+    case 'palabras':
+      return 'Palabras';
+      
+    case 'muerte':
+    case 'muertes':
+      return 'Muertes';
+      
+    case 'idioma':
+    case 'idiomas':
+      return 'Idiomas';
+      
+    default:
+      // Si no coincide, usar una categoría por defecto segura
+      console.warn(`Categoría desconocida: "${questionCategory}", usando "Peliculas" como fallback`);
+      return 'Peliculas';
+  }
+};
+
 export const GameLobby = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -199,7 +239,7 @@ export const GameLobby = (): JSX.Element => {
           moderator_id: moderatorId,
           question_id: question.id,
           active: roundNumber === 1, // Solo la primera ronda empieza activa
-          category: 'Siglas', // Usar una categoría que sabemos es válida
+          category: mapCategory(question.category), // Convertir a categoría válida
           voting_phase: false,
           reading_phase: false,
           results_phase: false

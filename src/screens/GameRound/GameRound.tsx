@@ -1367,7 +1367,6 @@ export const GameRound = (): JSX.Element => {
 
   if (round?.results_phase) {
     // Las puntuaciones ya están en el estado, no necesitamos recalcularlas aquí
-    const totalScores = calculateTotalScores();
 
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
