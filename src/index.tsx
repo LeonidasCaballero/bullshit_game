@@ -9,33 +9,20 @@ import { GameRound } from "./screens/GameRound";
 import { RoundIntro } from "./screens/RoundIntro";
 import { GameScores } from "./screens/GameScores";
 import { NextRound } from "./screens/NextRound";
-import { Login } from "./screens/Login";
-import { SignUp } from "./screens/SignUp";
 import { SupabaseProvider } from "./contexts/SupabaseContext";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PlayerProvider } from "./contexts/PlayerContext";
 
 createRoot(document.getElementById("app") as HTMLElement).render(
   <StrictMode>
     <SupabaseProvider>
-      <AuthProvider>
+      <PlayerProvider>
         <Router>
           <Routes>
-            {/* Ruta base redirige a login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Ruta base redirige a crear juego */}
+            <Route path="/" element={<Navigate to="/create-game" replace />} />
             
-            {/* Rutas de autenticación */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
-            
-            {/* Ruta protegida para crear juego */}
-            <Route path="/create-game" element={
-              <ProtectedRoute>
-                <Frame />
-              </ProtectedRoute>
-            } />
-            
-            {/* Rutas de juego */}
+            {/* Flujo simplificado */}
+            <Route path="/create-game" element={<Frame />} />
             <Route path="/share/:gameId" element={<ShareGame />} />
             <Route path="/game/:gameId" element={<JoinGame />} />
             <Route path="/game/:gameId/lobby" element={<GameLobby />} />
@@ -45,7 +32,7 @@ createRoot(document.getElementById("app") as HTMLElement).render(
             <Route path="/game/:gameId/next-round" element={<NextRound />} />
           </Routes>
         </Router>
-      </AuthProvider>
+      </PlayerProvider>
     </SupabaseProvider>
   </StrictMode>
 );

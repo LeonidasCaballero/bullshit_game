@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 import { ArrowLeft, Share2 } from "lucide-react";
 import type { Player, Game } from "../../lib/types";
 import { initializeGameQuestions, getQuestionForRound } from '../../services/questionService';
+import { usePlayer } from "../../contexts/PlayerContext";
 
 // Usar un servicio de avatares generados
 const getAvatarUrl = (seed: string) => 
@@ -59,7 +60,7 @@ export const GameLobby = (): JSX.Element => {
   const [error, setError] = useState<string | null>(null);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
   const [isStartingGame, setIsStartingGame] = useState(false);
-  const playerName = location.state?.playerName;
+  const { playerId, playerName } = usePlayer();
   const [showPresenta, setShowPresenta] = useState(false);
   const [showGameName, setShowGameName] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);

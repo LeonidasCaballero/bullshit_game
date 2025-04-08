@@ -19,7 +19,6 @@ export const JoinGame = (): JSX.Element => {
   const [error, setError] = useState("");
   const [game, setGame] = useState<Game | null>(null);
 
-  // Ahora podemos acceder a state con tipado correcto
   const isCreator = location.state?.isCreator;
   const gameName = location.state?.gameName;
 
@@ -46,18 +45,41 @@ export const JoinGame = (): JSX.Element => {
     }
     
     try {
+      // Crear un ID aleatorio para el jugador
+      const playerId = crypto.randomUUID();
+      
+      // Generar un color aleatorio para el avatar
+      const getRandomColor = () => {
+        const colors = [
+          "#F44336", "#E91E63", "#9C27B0", "#673AB7", 
+          "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4", 
+          "#009688", "#4CAF50", "#8BC34A", "#CDDC39"
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+      };
+      
       const { error: playerError } = await supabase
         .from('players')
         .insert([
           { 
+            id: playerId,
             game_id: gameId, 
-            name: playerName.trim()
+            name: playerName.trim(),
+            avatar_color: getRandomColor()
           }
         ]);
 
       if (playerError) throw playerError;
       
-      navigate(`/game/${gameId}/lobby`, { state: { playerName: playerName.trim() } });
+      // Guardar datos del jugador en localStorage para identificación simple
+      localStorage.setItem('bullshit_player_id', playerId);
+      localStorage.setItem('bullshit_player_name', playerName);
+      
+      navigate(`/game/${gameId}/lobby`, { 
+        state: { 
+          playerName: playerName.trim()
+        } 
+      });
     } catch (err) {
       console.error('Error joining game:', err);
       setError("Error al unirse a la partida. Por favor, inténtalo de nuevo.");
@@ -89,7 +111,7 @@ export const JoinGame = (): JSX.Element => {
               <CardContent className="p-5 space-y-5">
                 <h2 className="font-bold text-xl text-[#131309]">
                   {isCreator 
-                    ? `Has creado la partida "${gameName}"`
+                    ? `Has creado la partida "${gameName || game.name}"`
                     : 'Unirse a la partida'}
                 </h2>
 

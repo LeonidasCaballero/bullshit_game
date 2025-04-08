@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound, subscribeToVotes } from "../../lib/supabase";
 import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
+import { usePlayer } from "../../contexts/PlayerContext";
 
 // Add this with other interfaces
 type AnswerResponse = Pick<Answer, 'content' | 'player_id'> & {

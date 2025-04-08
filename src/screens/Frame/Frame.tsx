@@ -25,7 +25,6 @@ export const Frame = (): JSX.Element => {
       if (gameError) throw gameError;
       
       navigate(`/share/${game.id}`, { state: { gameName } });
-
     } catch (err) {
       console.error('Error creating game:', err);
       setError("Error al crear la partida. Por favor, inténtalo de nuevo.");

@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Copy } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import type { Game } from "../../lib/types";
+import { usePlayer } from "../../contexts/PlayerContext";
 
 export const ShareGame = (): JSX.Element => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export const ShareGame = (): JSX.Element => {
   const [showSnackbar, setShowSnackbar] = useState<boolean>(false);
   
   const gameUrl = `${window.location.origin}/game/${gameId}`;
+  const { setPlayerInfo } = usePlayer();
 
   useEffect(() => {
     const fetchGame = async () => {
