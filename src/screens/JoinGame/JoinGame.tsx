@@ -1,5 +1,4 @@
 import { Button } from "../../components/ui/button";
-import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -107,8 +106,13 @@ export const JoinGame = (): JSX.Element => {
           </h1>
 
           <div className="w-full">
+<<<<<<< HEAD
             <Card className="rounded-[20px] overflow-hidden border-none bg-white">
               <CardContent className="p-5 space-y-5">
+=======
+            <div className="bg-[#ffffff] rounded-[20px] shadow-md overflow-hidden" style={{backgroundColor: "#ffffff"}}>
+              <div className="p-5 space-y-5">
+>>>>>>> fix/question-data-issue
                 <h2 className="font-bold text-xl text-[#131309]">
                   {isCreator 
                     ? `Has creado la partida "${gameName || game.name}"`
@@ -143,8 +147,8 @@ export const JoinGame = (): JSX.Element => {
                 >
                   {isCreator ? 'Continuar' : 'Unirse'}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>

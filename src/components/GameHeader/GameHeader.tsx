@@ -17,6 +17,18 @@ export const GameHeader = ({
       `}>
         BULLSHIT
       </h1>
+<<<<<<< HEAD
+=======
+      
+      {/* Mostrar información de la ronda si estamos en el juego y hay un número de ronda */}
+      {inGame && roundNumber && (
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-sm text-[#131309] opacity-60">
+            Ronda {roundNumber} de {totalRounds}
+          </span>
+        </div>
+      )}
+>>>>>>> fix/question-data-issue
     </div>
   );
 }; 
