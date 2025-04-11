@@ -4,7 +4,6 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound, subscribeToVotes } from "../../lib/supabase";
 import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
-import { usePlayer } from "../../contexts/PlayerContext";
 
 // Add this with other interfaces
 type AnswerResponse = Pick<Answer, 'content' | 'player_id'> & {
@@ -47,15 +46,6 @@ const ReadingOverlay = () => (
   </div>
 );
 
-// Definir la interfaz para los scores fuera del componente
-interface Score {
-  game_id: string;
-  round_id: string;
-  player_id: string;
-  points: number;
-  reason: string;
-}
-
 export const GameRound = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,15 +84,8 @@ export const GameRound = (): JSX.Element => {
   const [showInsult, setShowInsult] = useState(false);
   const [insultoActual, setInsultoActual] = useState("");
 
-<<<<<<< HEAD
-  const hasProcessedVotes = useRef(false);
-
-  // Usar solo el setter del estado
-  const [, setTotalScores] = useState<Record<string, number>>({});
-=======
   // Al inicio del componente, añade:
   const [isVoting, setIsVoting] = useState(false);
->>>>>>> fix/question-data-issue
 
   // Modificar el InsultPopup para hacerlo más bonito y añadir el nombre del moderador
   const InsultPopup = () => (
@@ -286,7 +269,7 @@ export const GameRound = (): JSX.Element => {
   // Primero, definimos la función para manejar el voto
   const submitVote = async (selectedAnswer: string) => {
     if (!round || !currentPlayer?.id || isVoting) return;
-    
+
     try {
       setIsVoting(true);
       
@@ -313,8 +296,8 @@ export const GameRound = (): JSX.Element => {
         const { error: insertError } = await supabase
           .from('votes')
           .insert({
-            round_id: round.id,
-            player_id: currentPlayer.id,
+          round_id: round.id,
+          player_id: currentPlayer.id,
             selected_answer: selectedAnswer
           });
 
@@ -873,47 +856,6 @@ export const GameRound = (): JSX.Element => {
     };
   }, [gameId, round?.id]);
 
-  // Versión mejorada de calculateTotalScores sin depender de RPC
-  const calculateTotalScores = useCallback(async () => {
-    if (!gameId) return {};
-    
-    try {
-      console.log('📊 Calculando puntuaciones totales para el juego:', gameId);
-      
-      // Consulta directa a la tabla scores sin filtrado adicional
-      const { data: scores, error } = await supabase
-        .from('scores')
-        .select('player_id, points')
-        .eq('game_id', gameId);
-      
-      if (error) {
-        console.error('❌ Error obteniendo puntuaciones:', error);
-        return {};
-      }
-      
-      if (!scores || scores.length === 0) {
-        console.log('⚠️ No hay puntuaciones registradas para este juego');
-        return {};
-      }
-      
-      // Agrupar por jugador
-      const totals = scores.reduce((acc, score) => {
-        const playerId = score.player_id;
-        acc[playerId] = (acc[playerId] || 0) + score.points;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      console.log('✅ Puntuaciones calculadas:', totals);
-      return totals;
-      
-    } catch (error) {
-      console.error('❌ Error calculando puntuaciones:', error);
-      return {};
-    }
-  }, [gameId]);
-
-  // IMPORTANTE: Solo usar totalScores después de su declaración
-
   // Primero necesitamos una función para calcular los puntos
   const calculateScores = useCallback(() => {
     if (!question || !votes || !answers) return {};
@@ -954,65 +896,43 @@ export const GameRound = (): JSX.Element => {
     return scores;
   }, [question, votes, answers, players]);
 
-  // Función simplificada de processVotes sin depender de round_results
-  const processVotes = async () => {
+  // Añadir esta función para obtener las puntuaciones totales
+  const fetchTotalScores = useCallback(async () => {
+    if (!gameId || !players.length) return;
+    
     try {
-      if (!round?.id || !gameId || !question || !votes || !answers) {
-        console.error('❌ Faltan datos necesarios para procesar votos');
-        return;
-      }
-
-      // CAMBIO CRÍTICO: Usar una transacción con bloqueo
-      const { data: isLocked } = await supabase.rpc('lock_round_for_processing', {
-        round_id_param: round.id
+      console.log('📊 Obteniendo puntuaciones totales...');
+      
+      // Obtener todas las puntuaciones del juego
+      const { data: scoresData, error: scoresError } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('game_id', gameId);
+        
+      if (scoresError) throw scoresError;
+      
+      // Calcular total por jugador
+      const totalScores: Record<string, number> = {};
+      
+      // Inicializar todos los jugadores con 0 puntos
+      players.forEach(player => {
+        totalScores[player.id] = 0;
       });
       
-      if (!isLocked) {
-        console.log('⚠️ La ronda está siendo procesada por otra instancia');
-        return;
-      }
-
-      console.log('🔒 Ronda bloqueada para procesamiento exclusivo');
-
-      // Primero verificamos si ya existen puntuaciones
-      const { data: existingScores } = await supabase
-        .from('scores')
-        .select('id')
-        .eq('round_id', round.id)
-        .limit(1);
-
-      if (existingScores && existingScores.length > 0) {
-        console.log('⚠️ Los puntos para esta ronda ya fueron procesados');
-        return;
-      }
-
-      console.log('🎯 Procesando votos para la ronda:', round.id);
-
-      const scoresToInsert: Score[] = [];
-
-      // 1. Procesar votos correctos (2 puntos por acertar)
-      const correctVoters = votes
-        .filter(vote => vote.selected_answer === question.correct_answer);
-
-      console.log('✓ Votos correctos:', correctVoters.length);
-
-      // Añadir puntuaciones por votos correctos
-      correctVoters.forEach(vote => {
-        scoresToInsert.push({
-          game_id: gameId,
-          round_id: round.id,
-          player_id: vote.player_id,
-          points: 2,
-          reason: 'Voto correcto'
-        });
+      // Sumar los puntos de todas las rondas
+      scoresData?.forEach(score => {
+        totalScores[score.player_id] = (totalScores[score.player_id] || 0) + score.points;
       });
+      
+      console.log('✅ Puntuaciones totales calculadas:', totalScores);
+      return totalScores;
+    } catch (err) {
+      console.error('❌ Error obteniendo puntuaciones:', err);
+      setError('Error al obtener puntuaciones');
+      return {};
+    }
+  }, [gameId, players]);
 
-<<<<<<< HEAD
-      // 2. Procesar votos recibidos (1 punto por cada voto recibido)
-      const answerMap = new Map(
-        answers.map(answer => [answer.content, answer.player_id])
-      );
-=======
   // Usar este useEffect para guardar los puntos de la ronda actual
   useEffect(() => {
     if (!round?.results_phase || !question || !votes || !answers || !gameId) return;
@@ -1034,153 +954,58 @@ export const GameRound = (): JSX.Element => {
             reason: 'Voto correcto'
           })
         ));
->>>>>>> fix/question-data-issue
 
-      const votesByAnswer = votes
-        .filter(vote => vote.selected_answer !== question.correct_answer)
-        .reduce((acc, vote) => {
-          acc[vote.selected_answer] = (acc[vote.selected_answer] || 0) + 1;
+        // 2. Puntos por recibir votos (1 punto por voto)
+        const playerAnswers = answers.reduce((acc, answer) => {
+          acc[answer.content] = answer.player_id;
+          return acc;
+        }, {} as Record<string, string>);
+
+        const votesByAnswer = votes.reduce((acc, vote) => {
+          if (vote.selected_answer !== question.correct_answer) {
+            acc[vote.selected_answer] = (acc[vote.selected_answer] || 0) + 1;
+          }
           return acc;
         }, {} as Record<string, number>);
 
-      console.log('📊 Distribución de votos:', votesByAnswer);
-
-      // Añadir puntuaciones por votos recibidos
-      Object.entries(votesByAnswer).forEach(([answer, voteCount]) => {
-        const authorId = answerMap.get(answer);
-        if (authorId) {
-          scoresToInsert.push({
-            game_id: gameId,
-            round_id: round.id,
-            player_id: authorId,
-            points: voteCount,
-            reason: 'Votos recibidos'
-          });
-        }
-      });
-
-      console.log('💾 Puntuaciones a insertar:', scoresToInsert);
-
-      // Insertar las puntuaciones
-      if (scoresToInsert.length > 0) {
-        const { error: insertError } = await supabase
-          .from('scores')
-          .insert(scoresToInsert);
-
-        if (insertError) {
-          console.error('❌ Error insertando puntuaciones:', insertError);
-          return;
-        }
-
-        console.log('✅ Puntuaciones insertadas correctamente');
-      }
-
-      // Actualizar fase de la ronda
-      const { error: updateError } = await supabase
-        .from('rounds')
-        .update({ 
-          results_phase: true,
-          voting_phase: false 
-        })
-        .eq('id', round.id);
-
-      if (updateError) {
-        console.error('❌ Error actualizando fase de la ronda:', updateError);
-      }
-
-    } catch (error) {
-      console.error('❌ Error procesando votos:', error);
-    }
-  };
-
-  // UseEffect mejorado con control de limpieza
-  useEffect(() => {
-    let isCancelled = false;
-    const processingKey = `processing_${round?.id}`;
-    
-    // Verificar en sessionStorage si ya se está procesando
-    if (sessionStorage.getItem(processingKey)) {
-      console.log('⏱️ Esta ronda ya está siendo procesada en otra pestaña');
-      return () => {};
-    }
-    
-    const handleResultsPhase = async () => {
-      if (round?.results_phase && !hasProcessedVotes.current) {
-        hasProcessedVotes.current = true;
+        await Promise.all(
+          Object.entries(votesByAnswer).map(([answer, voteCount]) => {
+            const authorId = playerAnswers[answer];
+            if (authorId) {
+              return supabase.from('scores').insert({
+                game_id: gameId,
+                round_id: round.id,
+                player_id: authorId,
+                points: voteCount,
+                reason: 'Votos recibidos'
+              });
+            }
+          })
+        );
         
-        // Marcar como en procesamiento
-        sessionStorage.setItem(processingKey, 'true');
-        
-        try {
-          await processVotes();
-          
-          if (!isCancelled) {
-            const scores = await calculateTotalScores();
-            setTotalScores(scores);
-          }
-        } finally {
-          // Limpiar la marca solo si no fue cancelado
-          if (!isCancelled) {
-            sessionStorage.removeItem(processingKey);
-          }
-        }
+        console.log('✅ Puntuaciones guardadas correctamente');
+      } catch (err) {
+        console.error('❌ Error guardando puntuaciones:', err);
       }
     };
     
-    handleResultsPhase();
-    
-    return () => {
-      isCancelled = true;
-      console.log('🧹 Limpiando efecto de procesamiento de votos');
-    };
-  }, [round?.results_phase]);
+    saveScores();
+  }, [round?.results_phase, gameId, round?.id, question, votes, answers, calculateScores]);
 
-<<<<<<< HEAD
-  // Usar un useEffect con mejor control de dependencias
-=======
   // 1. Añadir el estado para totalScores
   const [, setTotalScores] = useState<Record<string, number>>({});
 
   // 2. Añadir useEffect para cargar puntuaciones totales
->>>>>>> fix/question-data-issue
   useEffect(() => {
-    // Añadir estas variables para prevenir llamadas duplicadas
-    let isLoading = false;
-    let isMounted = true;
-    
-    const loadTotalScores = async () => {
-      // Evitar ejecuciones simultáneas
-      if (isLoading) return;
-      isLoading = true;
-      
-      try {
-        if (!round?.results_phase) return;
-        
-        console.log('🔄 Cargando puntuaciones totales...');
-        const totals = await calculateTotalScores();
-        
-        // Solo actualizar si el componente sigue montado
-        if (isMounted) {
-          console.log('📊 Actualizando estado de puntuaciones');
-          setTotalScores(totals);
+    if (round?.results_phase) {
+      fetchTotalScores().then(scores => {
+        if (scores) {
+          console.log('📊 Puntuaciones totales cargadas:', scores);
+          setTotalScores(scores);
         }
-      } finally {
-        isLoading = false;
-      }
-    };
-    
-    // Ejecutar solo una vez
-    loadTotalScores();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [round?.results_phase, calculateTotalScores]);
-
-  // Corregir el error de handleSubmitVote
-  const handleSubmitVote = async () => {
-    // ... resto del código de manejo de votos
-  };
+      });
+    }
+  }, [round?.results_phase, fetchTotalScores]);
 
   // Modificar para manejar correctamente la promesa de fetchTotalScores
   // Añadir estado para almacenar las puntuaciones totales
@@ -1257,7 +1082,7 @@ export const GameRound = (): JSX.Element => {
           <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
             BULLSHIT
           </h1>
-      
+          
 
           <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
             <p className="text-[#131309] text-xl text-center">
@@ -1310,7 +1135,7 @@ export const GameRound = (): JSX.Element => {
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
           BULLSHIT
         </h1>
-
+        
 
         <div className="w-full max-w-[375px] mt-4 mb-24 px-4">
           {/* Pregunta en formato pequeño arriba */}
@@ -1326,49 +1151,10 @@ export const GameRound = (): JSX.Element => {
             <p className="text-white text-center font-medium">
               Selecciona la respuesta real
             </p>
-          </div>
+            </div>
 
           {/* Lista de opciones de respuesta */}
           <div className="space-y-3">
-<<<<<<< HEAD
-            {shuffledAnswers.map((answer, index) => {
-              // Determinar si esta respuesta es del usuario actual
-              const isOwnAnswer = answer.playerId === currentPlayer?.id;
-
-              return (
-                <div 
-                  key={index}
-                  className={`
-                    bg-white rounded-[15px] p-4 border-2 transition-all
-                    ${selectedVote === answer.content 
-                      ? 'border-[#CB1517]' 
-                      : hasVoted 
-                        ? 'border-transparent opacity-50' 
-                        : isOwnAnswer
-                          ? 'border-[#E7E7E6] opacity-70 cursor-not-allowed' 
-                          : 'border-transparent hover:border-[#CB1517] cursor-pointer'
-                      }
-                  `}
-                  onClick={() => !hasVoted && !isOwnAnswer && handleVote(answer.content)}
-                >
-                  <div className="flex justify-between items-center">
-                    <p 
-                      className="text-[#131309] text-lg"
-                      style={{ fontFamily: 'Caveat, cursive' }}
-                    >
-                      {answer.content}
-                    </p>
-                    
-                    {isOwnAnswer && (
-                      <span className="text-sm text-gray-500 italic">
-                        (Tu respuesta)
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-=======
             {shuffledAnswers.map((answer, index) => (
               <div 
                   key={index}
@@ -1391,7 +1177,6 @@ export const GameRound = (): JSX.Element => {
                   </p>
               </div>
             ))}
->>>>>>> fix/question-data-issue
           </div>
         </div>
 
@@ -1439,7 +1224,7 @@ export const GameRound = (): JSX.Element => {
   }
 
   if (round?.results_phase) {
-    // Las puntuaciones ya están en el estado, no necesitamos recalcularlas aquí
+    const totalScores = fetchTotalScores();
 
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
@@ -1447,13 +1232,6 @@ export const GameRound = (): JSX.Element => {
         BULLSHIT
       </h1>
       
-<<<<<<< HEAD
-      <p className="text-[#131309] text-xl mt-4">
-          RONDA {round.number}
-        </p>
-
-=======
->>>>>>> fix/question-data-issue
         <div className="w-full max-w-md px-4 mt-8 mb-28">
           <div className="bg-[#131309] rounded-[20px] p-6 mb-4">
             <h2 className="text-white text-xl font-bold text-center mb-2">
@@ -1482,10 +1260,7 @@ export const GameRound = (): JSX.Element => {
                 const isCurrentPlayer = player.id === currentPlayer?.id;
                 const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
                 const isCorrectVote = playerVote === question?.correct_answer;
-<<<<<<< HEAD
-=======
                 const totalPoints = totalScores[playerId as keyof typeof totalScores] || 0;
->>>>>>> fix/question-data-issue
                 
                 // Determinar el estilo de borde para el jugador actual
                 let borderStyle = '';
@@ -1533,12 +1308,9 @@ export const GameRound = (): JSX.Element => {
                         <div className="bg-[#9FFF00] px-3 py-1 rounded-full font-bold">
                           +{points} pts
                         </div>
-<<<<<<< HEAD
-=======
                         <div className="text-sm mt-1">
                           Total: {Number(totalPoints) + Number(points)} pts
                         </div>
->>>>>>> fix/question-data-issue
                       </div>
                     </div>
                     {/* Mostrar la respuesta del jugador (excepto para el moderador) */}
@@ -1878,26 +1650,16 @@ export const GameRound = (): JSX.Element => {
           ) : (
             <>
               {question && (
-                <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-4 p-4">
-                  <div className="space-y-2">
-                    <div className="bg-[#131309] rounded-[15px] p-3">
-                      <p className="text-white text-base text-center">
+                <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
+                  <div className="space-y-4">
+                    <div className="bg-[#131309] rounded-[20px] p-6">
+                      <p className="text-white text-xl text-center">
                         {question.text}
                       </p>
                     </div>
 
-                    <div className="bg-white rounded-[15px] p-3">
-                      <p 
-                        className="[font-family:'Londrina_Solid'] text-center text-[#131309]"
-                        style={{
-                          fontSize: question.content.length > 50 
-                            ? question.content.length > 100 
-                              ? '24px' 
-                              : '32px' 
-                            : '40px',
-                          lineHeight: question.content.length > 50 ? '1.2' : '1.3'
-                        }}
-                      >
+                    <div className="bg-white rounded-[20px] p-4">
+                      <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
                         {question.content}
                       </p>
                     </div>
@@ -1985,16 +1747,9 @@ export const GameRound = (): JSX.Element => {
                             
                             <span className="relative z-10 text-white">Insulta al resto</span>
                           </Button>
-<<<<<<< HEAD
-                          
-                          {/* Modificar este texto */}
-                          <p className="text-[#131309] text-base mb-4 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
-=======
                           <p className="text-[#131309] text-base sm:text-lg font-bold mb-4 whitespace-nowrap">
->>>>>>> fix/question-data-issue
                             Quedan {pendingPlayers.length} jugadores por responder:
                           </p>
-                          
                           <div className="w-full space-y-2 mb-4">
                             {pendingPlayers.map(player => (
                               <div 

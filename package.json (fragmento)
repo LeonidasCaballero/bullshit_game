@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "create-sample": "ts-node src/scripts/createSampleQuestions.ts",
-    "upload-questions": "ts-node src/scripts/uploadQuestions.ts"
-  }
-} 

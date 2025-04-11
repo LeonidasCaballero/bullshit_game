@@ -1,8 +1,12 @@
 interface GameHeaderProps {
+  roundNumber?: number;
+  totalRounds?: number;
   inGame?: boolean;
 }
 
 export const GameHeader = ({ 
+  roundNumber, 
+  totalRounds = 7,
   inGame = false
 }: GameHeaderProps): JSX.Element => {
   return (
@@ -17,8 +21,6 @@ export const GameHeader = ({
       `}>
         BULLSHIT
       </h1>
-<<<<<<< HEAD
-=======
       
       {/* Mostrar información de la ronda si estamos en el juego y hay un número de ronda */}
       {inGame && roundNumber && (
@@ -28,7 +30,6 @@ export const GameHeader = ({
           </span>
         </div>
       )}
->>>>>>> fix/question-data-issue
     </div>
   );
 }; 

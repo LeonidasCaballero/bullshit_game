@@ -1,6 +1,7 @@
 import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 
@@ -8,6 +9,15 @@ export const Frame = (): JSX.Element => {
   const navigate = useNavigate();
   const [gameName, setGameName] = useState("");
   const [error, setError] = useState("");
+
+  const gameData = {
+    title: "BULLSHIT",
+    cardTitle: "Comienza una partida",
+    instructions:
+      "Antes, da un nombre al grupo de desalmados que vais a jugar (por ejemplo, Los Cuñis o Las Sabandijas de Carabanchel).",
+    inputPlaceholder: "Nombre del grupo de jugadores",
+    buttonText: "Siguiente",
+  };
 
   const handleCreateGame = async () => {
     if (!gameName.trim()) {
@@ -25,6 +35,7 @@ export const Frame = (): JSX.Element => {
       if (gameError) throw gameError;
       
       navigate(`/share/${game.id}`, { state: { gameName } });
+
     } catch (err) {
       console.error('Error creating game:', err);
       setError("Error al crear la partida. Por favor, inténtalo de nuevo.");
@@ -33,7 +44,7 @@ export const Frame = (): JSX.Element => {
 
   return (
     <div className="bg-[#E7E7E6] flex justify-center w-full min-h-screen">
-      <div className="w-full max-w-[375px] h-[812px] flex flex-col items-center relative">
+      <div className="w-full max-w-[375px] h-[812px] flex flex-col items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
           BULLSHIT
         </h1>

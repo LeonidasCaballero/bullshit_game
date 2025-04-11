@@ -1,28 +1,22 @@
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Copy, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import type { Game } from "../../lib/types";
-import { usePlayer } from "../../contexts/PlayerContext";
 
 export const ShareGame = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const { gameId } = useParams();
-  const [, setCopied] = useState(false);
-  const [game, setGame] = useState<Game | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
-<<<<<<< HEAD
-  const [showSnackbar, setShowSnackbar] = useState<boolean>(false);
-=======
   const [showToast, setShowToast] = useState(false);
->>>>>>> fix/question-data-issue
   
+  const gameName = location.state?.gameName || "Partida";
   const gameUrl = `${window.location.origin}/game/${gameId}`;
-  const { setPlayerInfo } = usePlayer();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -65,18 +59,13 @@ export const ShareGame = (): JSX.Element => {
     fetchGame();
   }, [gameId]);
 
+  useEffect(() => {
+    console.log("Estado de navegación en ShareGame:", location.state);
+  }, [location.state]);
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(gameUrl).then(() => {
       setCopied(true);
-<<<<<<< HEAD
-      setShowSnackbar(true);
-      setTimeout(() => {
-        setShowSnackbar(false);
-      }, 3000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-=======
       // Mostrar toast
       setShowToast(true);
       // Ocultar toast después de 3 segundos
@@ -88,14 +77,14 @@ export const ShareGame = (): JSX.Element => {
         setCopied(false);
       }, 2000);
     });
->>>>>>> fix/question-data-issue
   };
 
   const handleContinue = () => {
+    console.log("Navegando a Join como creador desde ShareGame");
     navigate(`/game/${gameId}`, {
       state: {
         isCreator: true,
-        gameName
+        gameName: gameName || "Partida"
       }
     });
   };
@@ -184,18 +173,12 @@ export const ShareGame = (): JSX.Element => {
           </div>
         </div>
       </div>
-<<<<<<< HEAD
-      {showSnackbar && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#131309] text-white px-4 py-3 rounded-lg shadow-lg z-50">
-          Link copiado bro
-=======
 
       {/* Toast de confirmación */}
       {showToast && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fadeInUp">
           <CheckCircle2 className="w-5 h-5" />
           <span className="font-medium">¡Link copiado bro!</span>
->>>>>>> fix/question-data-issue
         </div>
       )}
     </div>

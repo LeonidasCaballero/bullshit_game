@@ -77,25 +77,11 @@ export const RoundIntro = () => {
   }
 
   const getCategoryEmoji = () => {
-    if (!round) return '';
-    console.log('Categoría de la ronda:', round.category); // Para debug
-    
     switch (round.category) {
-      case 'Peliculas':
-      case 'Películas':
-        return '🎬';
-      case 'Siglas':
-        return '🔤';
-      case 'Personajes':
-        return '👤';
-      case 'Palabras':
-        return '📝';
-      case 'Muertes':
-        return '💀';
-      case 'Idiomas':
-        return '🌍';
-      default:
-        return '❓';
+      case 'pelicula': return '🎬';
+      case 'sigla': return 'ABC';
+      case 'personaje': return '👤';
+      default: return '';
     }
   };
 

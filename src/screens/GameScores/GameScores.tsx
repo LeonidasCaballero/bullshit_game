@@ -37,37 +37,73 @@ export const GameScores = () => {
 
         if (!players) return;
 
-        // 2. Obtener las puntuaciones
-        const { data: scores } = await supabase
+        // 2. Obtener TODAS las puntuaciones del juego
+        const { data: allScores } = await supabase
           .from('scores')
           .select('*')
           .eq('game_id', gameId);
+          
+        // 3. Obtener las puntuaciones SOLO de la ronda actual
+        const currentRoundId = location.state?.roundId;
+        const currentRoundScores = allScores?.filter(score => 
+          score.round_id === currentRoundId
+        ) || [];
 
-        // 3. Calcular puntuaciones por jugador
+        // 4. Calcular puntuaciones por jugador de forma correcta
         const calculatedScores = players.map(player => {
-          const playerScores = scores?.filter(s => s.player_id === player.id) || [];
-          const correctVotePoints = playerScores
+          // Filtrar puntuaciones GLOBALES para este jugador
+          const playerGlobalScores = allScores?.filter(s => s.player_id === player.id) || [];
+          
+          // Calcular puntos globales por tipo de razón (sin duplicar)
+          const uniqueGlobalScores = Array.from(
+            // Agrupar por combinación única de round_id + reason para evitar contar dos veces la misma razón en la misma ronda
+            new Map(playerGlobalScores.map(score => 
+              [`${score.round_id}-${score.reason}`, score]
+            )).values()
+          );
+          
+          const globalCorrectVotePoints = uniqueGlobalScores
             .filter(s => s.reason === 'Voto correcto')
             .reduce((sum, score) => sum + score.points, 0);
-          const receivedVotesPoints = playerScores
+            
+          const globalReceivedVotesPoints = uniqueGlobalScores
+            .filter(s => s.reason === 'Votos recibidos')
+            .reduce((sum, score) => sum + score.points, 0);
+          
+          // Filtrar puntuaciones SOLO DE ESTA RONDA para este jugador
+          const playerRoundScores = currentRoundScores.filter(s => s.player_id === player.id);
+          
+          const roundCorrectVotePoints = playerRoundScores
+            .filter(s => s.reason === 'Voto correcto')
+            .reduce((sum, score) => sum + score.points, 0);
+            
+          const roundReceivedVotesPoints = playerRoundScores
             .filter(s => s.reason === 'Votos recibidos')
             .reduce((sum, score) => sum + score.points, 0);
 
+          // Devolver objeto con ambas puntuaciones claramente separadas
           return {
             player,
-            totalPoints: correctVotePoints + receivedVotesPoints,
-            roundPoints: playerScores
-              .filter(score => score.round_id === location.state?.roundId)
-              .map(score => ({
-                points: score.points,
-                reason: score.reason
-              })),
-            correctVotePoints,
-            receivedVotesPoints
+            // Total global (todas las rondas)
+            totalPoints: globalCorrectVotePoints + globalReceivedVotesPoints,
+            // Puntos solo de esta ronda
+            roundPoints: playerRoundScores.map(score => ({
+              points: score.points,
+              reason: score.reason
+            })),
+            // Separar los puntos para mejor diagnóstico
+            correctVotePoints: roundCorrectVotePoints,
+            receivedVotesPoints: roundReceivedVotesPoints,
+            // Agregar campos para diagnóstico
+            globalCorrectVotePoints,
+            globalReceivedVotesPoints
           };
         });
-
-        // 4. Ordenar por puntos totales
+        
+        // Log para diagnóstico
+        console.log('Puntuaciones calculadas:', calculatedScores);
+        
+        // Ordenar por puntos totales
         calculatedScores.sort((a, b) => b.totalPoints - a.totalPoints);
         
         setPlayerScores(calculatedScores);
@@ -83,74 +119,22 @@ export const GameScores = () => {
 
   // Timer para la navegación
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setInterval(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-
-    if (countdown === 0) {
-      const handleTimerComplete = async () => {
-        console.log('⏱️ Timer completado, buscando siguiente ronda...', { gameId, roundNumber });
-        
-        try {
-          // 1. Marcar la ronda actual como inactiva
-          await supabase
-            .from('rounds')
-            .update({ active: false })
-            .eq('id', location.state?.roundId);
-          
-          // 2. Obtener la siguiente ronda
-          const { data: nextRound, error } = await supabase
-            .from('rounds')
-            .select()
-            .eq('game_id', gameId)
-            .gt('number', roundNumber)
-            .order('number', { ascending: true })
-            .limit(1)
-            .single();
-          
-          if (error || !nextRound) {
-            console.log('No hay más rondas, volviendo al lobby...');
-            navigate(`/game/${gameId}`);
-            return;
-          }
-          
-          console.log('Siguiente ronda encontrada:', nextRound);
-          
-          // 3. Marcar la siguiente ronda como activa
-          await supabase
-            .from('rounds')
-            .update({ active: true })
-            .eq('id', nextRound.id);
-          
-          // 4. Actualizar el current_round_id en la tabla games
-          await supabase
-            .from('games')
-            .update({ current_round_id: nextRound.id })
-            .eq('id', gameId);
-          
-          // 5. Navegar a la pantalla de introducción de la siguiente ronda
-          navigate(`/game/${gameId}/round/intro`, {
-            state: {
-              roundId: nextRound.id,
-              roundNumber: nextRound.number,
-              moderatorId: nextRound.moderator_id,
-              playerName: location.state?.playerName,
-              category: nextRound.category
-            }
-          });
-        } catch (err) {
-          console.error('Error al buscar la siguiente ronda:', err);
-          navigate(`/game/${gameId}`);
+    if (countdown <= 0) {
+      console.log('⏱️ Countdown terminado, navegando a la pantalla de próxima ronda...');
+      navigate(`/game/${gameId}/next-round`, {
+        state: {
+          playerName: location.state?.playerName,
+          roundNumber: roundNumber + 1,
+          // Asegurarse de pasar cualquier otro dato relevante del estado actual
+          currentPlayer: location.state?.currentPlayer,
+          players: location.state?.players
         }
-      };
-
-      handleTimerComplete();
+      });
+    } else {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
     }
-  }, [countdown, gameId, navigate, location.state?.playerName, roundNumber]);
+  }, [countdown, gameId, navigate, roundNumber, location.state]);
 
   if (isLoading) {
     return (
