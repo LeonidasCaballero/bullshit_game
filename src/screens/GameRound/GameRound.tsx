@@ -1,9 +1,8 @@
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound, subscribeToVotes } from "../../lib/supabase";
-import { ArrowLeft, Timer, ChevronLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
 // Add this with other interfaces
@@ -267,16 +266,13 @@ export const GameRound = (): JSX.Element => {
     }
   }, [round?.voting_phase, round?.id, round?.question_id, isModerator, currentPlayer?.id, players, moderator?.id, retryCount]);
 
-  // Modificar la función handleVote para manejar duplicados
-  const handleVote = async (answerId: string) => {
+  // Primero, definimos la función para manejar el voto
+  const submitVote = async (selectedAnswer: string) => {
     if (!round || !currentPlayer?.id || isVoting) return;
     
     try {
-      // Establece el estado de bloqueo
       setIsVoting(true);
       
-      console.log('🎯 Enviando voto...', new Date().toISOString());
-
       // Verificar si el jugador ya ha votado
       const { data: existingVote, error: checkError } = await supabase
         .from('votes')
@@ -285,82 +281,37 @@ export const GameRound = (): JSX.Element => {
         .eq('player_id', currentPlayer.id)
         .maybeSingle();
 
-      if (checkError) {
-        console.error('❌ Error al verificar voto existente:', checkError);
-        throw checkError;
-      }
-
-      console.log('🔍 Voto existente:', existingVote);
+      if (checkError) throw checkError;
 
       if (existingVote) {
-        // Si ya existe un voto, actualizarlo
-        console.log('🔄 Actualizando voto existente...');
+        // Actualizar voto existente
         const { error: updateError } = await supabase
           .from('votes')
-          .update({ selected_answer: answerId })
+          .update({ selected_answer: selectedAnswer })
           .eq('id', existingVote.id);
 
-        if (updateError) {
-          console.error('❌ Error al actualizar voto:', updateError);
-          throw updateError;
-        }
-
-        console.log('✅ Voto actualizado exitosamente');
+        if (updateError) throw updateError;
       } else {
-        // Si no existe un voto, insertar uno nuevo
-        console.log('➕ Insertando nuevo voto...');
+        // Insertar nuevo voto
         const { error: insertError } = await supabase
           .from('votes')
           .insert({
             round_id: round.id,
             player_id: currentPlayer.id,
-            selected_answer: answerId
+            selected_answer: selectedAnswer
           });
 
-        if (insertError) {
-          console.error('❌ Error al insertar voto:', insertError);
-          throw insertError;
-        }
-
-        console.log('✅ Voto registrado exitosamente');
+        if (insertError) throw insertError;
       }
 
-      // Actualizar estado local inmediatamente
       setHasVoted(true);
-      setSelectedVote(answerId);
-
-      // Enviar broadcast DESPUÉS de que la base de datos se haya actualizado
-      if (votesChannelRef.current) {
-        votesChannelRef.current.send({
-          type: 'broadcast',
-          event: 'new_vote',
-          payload: {
-            roundId: round.id,
-            playerId: currentPlayer.id,
-            timestamp: new Date().toISOString()
-          }
-        }).then(() => {
-          console.log('📢 Broadcast de voto enviado correctamente');
-          // Recargar votos después de enviar el broadcast para asegurar consistencia
-          setTimeout(fetchVotes, 500);
-        }).catch(err => {
-          console.error('❌ Error enviando broadcast:', err);
-        });
-      } else {
-        console.warn('⚠️ Canal de votos no disponible para broadcast');
-        // Aún así, actualizar los votos
-        fetchVotes();
-      }
+      setSelectedVote(selectedAnswer);
 
     } catch (error) {
       console.error('Error al votar:', error);
-      setError('No se pudo registrar tu voto. Por favor, inténtalo de nuevo.');
+      setError('No se pudo registrar tu voto');
     } finally {
-      // Liberar el bloqueo después de un tiempo para asegurar
-      // que cualquier otro evento pendiente ya haya sido descartado
-      setTimeout(() => {
-        setIsVoting(false);
-      }, 500);
+      setTimeout(() => setIsVoting(false), 500);
     }
   };
 
@@ -688,77 +639,42 @@ export const GameRound = (): JSX.Element => {
   };
 
   useEffect(() => {
-    if (!round?.voting_phase || !round?.id) return;
+    if (!round?.voting_phase || !round.id) return;
 
-    console.log('📊 Configurando suscripción a votos...');
-    
-    // Canal para recibir actualizaciones de votos por broadcast con ID único por ronda
-    const votesChannel = supabase
-      .channel(`votes-channel-${round.id}`) // Añadir ID de ronda para garantizar unicidad
-      .on('broadcast', { event: 'new_vote' }, (payload) => {
-        console.log('📣 Notificación de nuevo voto recibida', payload);
-        // Recargar los votos cuando se recibe una notificación
-        fetchVotes();
-      })
-      .subscribe((status) => {
-        console.log(`Suscripción a votos: ${status}`, new Date().toISOString());
-        if (status === 'SUBSCRIBED') {
-          // Cargar datos inmediatamente después de suscribirse
-          fetchVotes();
-        }
-      });
-      
-    votesChannelRef.current = votesChannel;
-    
-    // Cargar votos iniciales
-    fetchVotes();
-    
+    console.log('🔄 Configurando suscripción a votos...');
+
+    // Suscribirse a cambios en los votos
+    const votesSubscription = subscribeToVotes(round.id, (payload) => {
+      console.log('📥 Nuevo voto recibido:', payload);
+      // Recargar los votos cuando haya cambios
+      fetchVotes();
+    });
+
+    // Guardar la referencia de la suscripción
+    votesChannelRef.current = votesSubscription;
+
     return () => {
-      console.log('🧹 Limpiando suscripción a votos');
-      votesChannel.unsubscribe();
+      console.log('🔄 Limpiando suscripción a votos...');
+      if (votesChannelRef.current) {
+        votesChannelRef.current.unsubscribe();
+      }
     };
   }, [round?.id, round?.voting_phase]);
 
   // Función mejorada para cargar votos
   const fetchVotes = async () => {
-    if (!round) return;
-    
+    if (!round?.id) return;
+
     try {
-      console.log('🔍 Cargando votos frescos...', new Date().toISOString());
-      
-      // Forzar refresco desde la base de datos
-      const { data: votesData, error: votesError } = await supabase
+      const { data: votesData, error } = await supabase
         .from('votes')
         .select('*')
-        .eq('round_id', round.id)
-        .order('created_at', { ascending: true })
-        .limit(100) // Asegurar que obtenemos todos los posibles votos
-        .throwOnError();
-        
-      if (votesError) throw votesError;
-      
-      console.log('🔄 Votos actuales:', votesData);
-      
-      // Actualizar contadores para la UI
-      const nonModeratorPlayers = players.filter(p => p.id !== round.moderator_id);
-      const votedCount = new Set(votesData?.map(v => v.player_id)).size;
-      const totalPlayers = nonModeratorPlayers.length;
-      
-      console.log(`👥 Votos recibidos: ${votedCount}/${totalPlayers}`);
-      
+        .eq('round_id', round.id);
+
+      if (error) throw error;
       setVotes(votesData || []);
-      setAllPlayersVoted(votedCount >= totalPlayers);
-      
-      // Actualizar también si el jugador actual ha votado
-      if (currentPlayer?.id) {
-        const playerVote = votesData?.find(vote => vote.player_id === currentPlayer.id);
-        setHasVoted(!!playerVote);
-        if (playerVote) {
-          setSelectedVote(playerVote.selected_answer);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error al cargar votos:', error);
+    } catch (err) {
+      console.error('Error fetching votes:', err);
     }
   };
 
@@ -1026,7 +942,6 @@ export const GameRound = (): JSX.Element => {
         console.log('💾 Guardando puntuaciones de la ronda...');
         
         // Calcular las puntuaciones de esta ronda
-        const scores = calculateScores();
         
         // 1. Puntos por votos correctos (2 puntos)
         const correctVoters = votes.filter(vote => vote.selected_answer === question.correct_answer);
@@ -1078,7 +993,7 @@ export const GameRound = (): JSX.Element => {
   }, [round?.results_phase, gameId, round?.id, question, votes, answers, calculateScores]);
 
   // 1. Añadir el estado para totalScores
-  const [totalScores, setTotalScores] = useState<Record<string, number>>({});
+  const [, setTotalScores] = useState<Record<string, number>>({});
 
   // 2. Añadir useEffect para cargar puntuaciones totales
   useEffect(() => {
@@ -1167,10 +1082,7 @@ export const GameRound = (): JSX.Element => {
           <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
             BULLSHIT
           </h1>
-          
-          <p className="text-[#131309] text-xl mt-4">
-            RONDA {round.number}
-          </p>
+      
 
           <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
             <p className="text-[#131309] text-xl text-center">
@@ -1223,10 +1135,7 @@ export const GameRound = (): JSX.Element => {
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
           BULLSHIT
         </h1>
-        
-        <p className="text-[#131309] text-xl mt-4">
-          RONDA {round.number}
-        </p>
+
 
         <div className="w-full max-w-[375px] mt-4 mb-24 px-4">
           {/* Pregunta en formato pequeño arriba */}
@@ -1258,7 +1167,7 @@ export const GameRound = (): JSX.Element => {
                       : 'border-transparent hover:border-[#CB1517] cursor-pointer'
                   }
                 `}
-                onClick={() => !hasVoted && handleVote(answer.content)}
+                onClick={() => !hasVoted && submitVote(answer.content)}
               >
                 <p 
                   className="text-[#131309] text-lg"
@@ -1278,7 +1187,8 @@ export const GameRound = (): JSX.Element => {
               <div className="max-w-[327px] mx-auto">
                 <Button
                   className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
-                  onClick={handleVote}
+                  onClick={() => !hasVoted && selectedVote && submitVote(selectedVote)}
+                  disabled={hasVoted || !selectedVote}
                 >
                   Confirmar voto
                 </Button>
@@ -1322,10 +1232,6 @@ export const GameRound = (): JSX.Element => {
         BULLSHIT
       </h1>
       
-      <p className="text-[#131309] text-xl mt-4">
-          RONDA {round.number}
-        </p>
-
         <div className="w-full max-w-md px-4 mt-8 mb-28">
           <div className="bg-[#131309] rounded-[20px] p-6 mb-4">
             <h2 className="text-white text-xl font-bold text-center mb-2">
@@ -1354,7 +1260,7 @@ export const GameRound = (): JSX.Element => {
                 const isCurrentPlayer = player.id === currentPlayer?.id;
                 const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
                 const isCorrectVote = playerVote === question?.correct_answer;
-                const totalPoints = totalScores[playerId] || 0;
+                const totalPoints = totalScores[playerId as keyof typeof totalScores] || 0;
                 
                 // Determinar el estilo de borde para el jugador actual
                 let borderStyle = '';
@@ -1403,11 +1309,10 @@ export const GameRound = (): JSX.Element => {
                           +{points} pts
                         </div>
                         <div className="text-sm mt-1">
-                          Total: {totalPoints + points} pts
+                          Total: {Number(totalPoints) + Number(points)} pts
                         </div>
                       </div>
                     </div>
-                    
                     {/* Mostrar la respuesta del jugador (excepto para el moderador) */}
                     {playerAnswer && !isPlayerModerator && (
                       <div className="bg-gray-100 p-3 rounded-lg mb-2 mt-1">
@@ -1592,9 +1497,6 @@ export const GameRound = (): JSX.Element => {
         BULLSHIT
       </h1>
       
-      <p className="text-[#131309] text-xl mt-4">
-        RONDA {round.number}
-      </p>
 
       {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
         <>
@@ -1665,8 +1567,8 @@ export const GameRound = (): JSX.Element => {
                       className="text-[#131309] text-2xl"
                       style={{ fontFamily: 'Caveat, cursive' }}
                     >
-                  {shuffledAnswers[currentAnswerIndex].content}
-                </p>
+                      {shuffledAnswers[currentAnswerIndex].content}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1845,7 +1747,7 @@ export const GameRound = (): JSX.Element => {
                             
                             <span className="relative z-10 text-white">Insulta al resto</span>
                           </Button>
-                          <p className="text-[#131309] text-xl font-bold mb-4">
+                          <p className="text-[#131309] text-base sm:text-lg font-bold mb-4 whitespace-nowrap">
                             Quedan {pendingPlayers.length} jugadores por responder:
                           </p>
                           <div className="w-full space-y-2 mb-4">

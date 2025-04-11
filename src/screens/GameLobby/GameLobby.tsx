@@ -1,15 +1,31 @@
 import { Button } from "../../components/ui/button";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { Users, ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import type { Player, Game } from "../../lib/types";
 
 // Usar un servicio de avatares generados
 const getAvatarUrl = (seed: string) => 
   `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
 
+// Asegurarnos de que rounds tenga el tipo correcto
+interface Round {
+  id: string;
+  game_id: string;
+  number: number;
+  moderator_id: string;
+  category: string;
+  active: boolean;
+  question_id: string;
+  voting_phase: boolean;
+  reading_phase: boolean;
+  results_phase: boolean;
+}
+
 export const GameLobby = (): JSX.Element => {
+  console.log("GameLobby renderizado");
+
   const navigate = useNavigate();
   const location = useLocation();
   const { gameId } = useParams();
@@ -18,7 +34,11 @@ export const GameLobby = (): JSX.Element => {
   const [error, setError] = useState<string | null>(null);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
   const [isStartingGame, setIsStartingGame] = useState(false);
+  const [firstPlayer, setFirstPlayer] = useState<Player | null>(null);
   const playerName = location.state?.playerName;
+  const [showTitle, setShowTitle] = useState(false);
+  const [showSubtitle, setShowSubtitle] = useState(false);
+  const [showGameName, setShowGameName] = useState(false);
 
   const ensureQuestionsExist = async () => {
     try {
@@ -182,7 +202,18 @@ export const GameLobby = (): JSX.Element => {
           .order('created_at', { ascending: true });
 
         if (playersError) throw playersError;
-        if (playersData) setPlayers(playersData);
+        if (playersData) {
+          setPlayers(playersData);
+          
+          // El primer jugador es el primero en la lista (orden por created_at)
+          setFirstPlayer(playersData[0]);
+          
+          // Identificar el jugador actual
+          const currentPlayer = playersData.find(p => p.name === playerName);
+          if (currentPlayer) {
+            setCurrentPlayerId(currentPlayer.id);
+          }
+        }
       } catch (err) {
         console.error('Error fetching game data:', err);
         setError('Error al cargar los datos del juego');
@@ -195,6 +226,9 @@ export const GameLobby = (): JSX.Element => {
 
     return () => clearInterval(intervalId);
   }, [gameId, playerName, navigate]);
+
+  // Determinar si el jugador actual es el primero
+  const isFirstPlayer = currentPlayerId && firstPlayer && currentPlayerId === firstPlayer.id;
 
   const handleStartGame = async () => {
     if (!gameId || players.length < 2 || isStartingGame) return;
@@ -338,23 +372,21 @@ export const GameLobby = (): JSX.Element => {
       }
 
       // 4. Insertar todas las rondas
-      const { error: roundsError } = await supabase
+      const { data: roundsData } = await supabase
         .from('rounds')
-        .insert(rounds);
+        .insert(rounds)
+        .select() as { data: Round[] };
 
-      if (roundsError) throw roundsError;
+      if (roundsData && roundsData.length > 0) {
+        await supabase
+          .from('games')
+          .update({ 
+            started: true,
+            current_round_id: roundsData[0].id 
+          })
+          .eq('id', gameId);
+      }
 
-      // 5. Actualizar el estado del juego
-      const { error: gameError } = await supabase
-        .from('games')
-        .update({ 
-          started: true,
-          current_round_id: rounds[0].id 
-        })
-        .eq('id', gameId);
-
-      if (gameError) throw gameError;
-      
       console.log('✅ Juego iniciado correctamente');
 
     } catch (err) {
@@ -364,32 +396,24 @@ export const GameLobby = (): JSX.Element => {
     }
   };
 
-  const checkGameStatus = async () => {
-    try {
-      // En lugar de buscar rondas activas, obtener la ronda más reciente
-      const { data: latestRound } = await supabase
-        .from('rounds')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
 
-      if (latestRound) {
-        // Usar la ronda más reciente para determinar el estado del juego
-        navigate(`/game/${gameId}/round`, {
-          state: {
-            roundId: latestRound.id,
-            roundNumber: latestRound.number,
-            moderatorId: latestRound.moderator_id,
-            playerName: location.state?.playerName
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error checking game status:', error);
-    }
-  };
+  // Efecto para las animaciones secuenciales
+  useEffect(() => {
+    // Mostrar título después de 100ms
+    const titleTimer = setTimeout(() => setShowTitle(true), 100);
+    
+    // Mostrar subtítulo después de 600ms
+    const subtitleTimer = setTimeout(() => setShowSubtitle(true), 600);
+    
+    // Mostrar nombre del juego después de 1100ms
+    const gameNameTimer = setTimeout(() => setShowGameName(true), 1100);
+    
+    return () => {
+      clearTimeout(titleTimer);
+      clearTimeout(subtitleTimer);
+      clearTimeout(gameNameTimer);
+    };
+  }, []);
 
   if (error) {
     return (
@@ -423,19 +447,33 @@ export const GameLobby = (): JSX.Element => {
   }
 
   return (
-    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-      <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
-        BULLSHIT
-      </h1>
+    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center pb-32">
+      <div className="mt-8 flex flex-col items-center">
+        <h1 
+          className={`[font-family:'Londrina_Solid'] text-[32px] sm:text-[40px] text-[#131309] transform transition-opacity duration-500 ease-in-out whitespace-nowrap ${
+            showTitle ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          BULLSHIT
+        </h1>
+        
+        <p 
+          className={`text-[#131309] text-base sm:text-lg mt-0 transform transition-opacity duration-500 ease-in-out whitespace-nowrap ${
+            showSubtitle ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          presenta a...
+        </p>
+
+        <h2 
+          className={`[font-family:'Londrina_Solid'] text-[30px] sm:text-[38px] text-[#131309] mt-1 text-center transform transition-opacity duration-500 ease-in-out whitespace-nowrap ${
+            showGameName ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {game?.name?.toUpperCase()}
+        </h2>
+      </div>
       
-      <p className="text-[#131309] text-xl mt-2">
-        presenta a...
-      </p>
-
-      <h2 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-4 text-center">
-        {game?.name?.toUpperCase()}
-      </h2>
-
       <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
         <div className="flex items-center justify-between mb-6">
           <p className="text-[#131309] text-xl">
@@ -444,12 +482,6 @@ export const GameLobby = (): JSX.Element => {
           <button className="text-[#131309]">
             <Share2 className="w-6 h-6" />
           </button>
-        </div>
-
-        <div className="bg-[#131309] text-white p-4 rounded-[10px] mb-6">
-          <p className="text-center">
-            Espera a que se unan todos los jugadores antes de comenzar.
-          </p>
         </div>
 
         <div className="space-y-3">
@@ -470,16 +502,36 @@ export const GameLobby = (): JSX.Element => {
             </div>
           ))}
         </div>
-
-        <Button
-          className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base mt-6"
-          onClick={handleStartGame}
-          disabled={players.length < 2 || isStartingGame}
-        >
-          {isStartingGame ? "Iniciando partida..." : 
-            players.length < 2 ? "Esperando jugadores..." : "Comenzar partida"}
-        </Button>
       </div>
+
+      {/* Panel fijo en la parte inferior solo para el primer jugador */}
+      {isFirstPlayer && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-6 pt-5 pb-8">
+          <div className="max-w-[327px] mx-auto space-y-4">
+            <p className="text-[#131309] text-center">
+              Eres el primero en llegar. Comienza la partida cuando estéis todos aquí.
+            </p>
+            <Button
+              className="w-full h-12 bg-[#cb1517] hover:bg-[#b31315] text-white rounded-[10px] font-bold text-base"
+              onClick={handleStartGame}
+              disabled={isStartingGame}
+            >
+              {isStartingGame ? "Iniciando..." : "Comenzar partida"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Panel fijo en la parte inferior para jugadores no primeros */}
+      {!isFirstPlayer && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-6 pt-5 pb-8">
+          <div className="max-w-[327px] mx-auto">
+            <p className="text-[#131309] text-center">
+              {firstPlayer?.name || 'El primer jugador'} comenzará la partida cuando lleguéis todos.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
