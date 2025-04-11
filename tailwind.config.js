@@ -118,6 +118,14 @@ module.exports = {
             boxShadow: '0 0 16px 4px rgba(255,87,0,0.7), 0 0 0 8px rgba(255,87,0,0)' 
           }
         },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translate(-50%, 10px)' },
+          '100%': { opacity: '1', transform: 'translate(-50%, 0)' },
+        },
+        fadeOutDown: {
+          '0%': { opacity: '1', transform: 'translate(-50%, 0)' },
+          '100%': { opacity: '0', transform: 'translate(-50%, 10px)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -128,6 +136,8 @@ module.exports = {
         exitRight: 'exitRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         'flicker': 'flicker 2s ease-in-out infinite alternate',
         'fire-border': 'fireBorder 2s ease-in-out infinite',
+        'fadeInUp': 'fadeInUp 0.3s ease-out',
+        'fadeOutDown': 'fadeOutDown 0.3s ease-out',
       },
     },
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },

@@ -14,6 +14,7 @@ export const ShareGame = (): JSX.Element => {
   const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
   
   const gameName = location.state?.gameName || "Partida";
   const gameUrl = `${window.location.origin}/game/${gameId}`;
@@ -59,20 +60,27 @@ export const ShareGame = (): JSX.Element => {
     fetchGame();
   }, [gameId]);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(gameUrl);
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(gameUrl).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
+      // Mostrar toast
+      setShowToast(true);
+      // Ocultar toast después de 3 segundos
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      // Restaurar el estado del botón después de 2 segundos
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    });
   };
 
   const handleContinue = () => {
-    navigate(`/game/${gameId}`, { 
-      state: { 
-        gameName: location.state?.gameName 
+    navigate(`/game/${gameId}`, {
+      state: {
+        isCreator: true,
+        gameName
       }
     });
   };
@@ -109,53 +117,66 @@ export const ShareGame = (): JSX.Element => {
   }
 
   return (
-    <div className="bg-[#E7E7E6] flex justify-center w-full min-h-screen">
-      <div className="w-full max-w-[375px] h-[812px] flex flex-col items-center">
-        <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
-          BULLSHIT
-        </h1>
+    <div className="min-h-screen bg-[#E7E7E6] flex flex-col items-center">
+      <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mt-12">
+        BULLSHIT
+      </h1>
 
-        <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
-          <h2 className="text-[#131309] text-xl font-bold mb-4">
-            Comparte el enlace de la partida
+      {/* Tarjeta personalizada con fondo blanco forzado */}
+      <div className="w-full max-w-[327px] mt-8 bg-[#ffffff] rounded-[20px] shadow-md overflow-hidden" style={{backgroundColor: "#ffffff"}}>
+        <div className="p-5 space-y-5">
+          <h2 className="font-bold text-xl text-[#131309]">
+            ¡{gameName} creado!
           </h2>
-
-          <p className="text-[#131309] text-base mb-6">
-            Genial, ahora comparte este enlace con el resto de {game?.name} (por WhatsApp, por ejemplo).
+          
+          <p className="text-[#131309] text-base">
+            Comparte este enlace con el resto de los jugadores para que se unan a la partida.
           </p>
-
-          <div className="space-y-4">
-            <Input
-              className="h-12 px-3 py-2 rounded-[10px] border-[#13130940] text-base"
-              value={gameUrl}
-              readOnly
-            />
-
+          
+          <div className="bg-[#F3F3F3] rounded-[10px] flex items-center px-3 py-2.5">
+            <span className="flex-1 truncate text-[#131309] text-sm">
+              {gameUrl}
+            </span>
             <Button
-              className="w-full h-12 bg-[#E7E7E6] hover:bg-[#d1d1d0] text-[#131309] rounded-[10px] font-bold text-base flex items-center justify-center gap-2"
-              onClick={handleCopy}
+              className={`w-8 h-8 p-0 rounded-full ml-2 ${
+                copied
+                  ? "bg-green-500 hover:bg-green-600"
+                  : "bg-[#CB1517] hover:bg-[#B31315]"
+              }`}
+              onClick={handleCopyLink}
             >
-              <Copy className="w-5 h-5" />
-              Copiar enlace
+              {copied ? (
+                <CheckCircle2 className="w-4 h-4 text-white" />
+              ) : (
+                <Copy className="w-4 h-4 text-white" />
+              )}
             </Button>
-
-            <div className="flex gap-3">
-              <Button
-                className="flex-1 h-12 bg-[#E7E7E6] hover:bg-[#d1d1d0] text-[#131309] rounded-[10px] font-bold text-base"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <Button
-                className="flex-1 h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
-                onClick={handleContinue}
-              >
-                Siguiente
-              </Button>
-            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button
+              className="flex-1 h-12 bg-[#E7E7E6] hover:bg-[#d1d1d0] text-[#131309] rounded-[10px] font-bold text-base"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <Button
+              className="flex-1 h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+              onClick={handleContinue}
+            >
+              Siguiente
+            </Button>
           </div>
         </div>
       </div>
+
+      {/* Toast de confirmación */}
+      {showToast && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fadeInUp">
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="font-medium">¡Link copiado bro!</span>
+        </div>
+      )}
     </div>
   );
 };
