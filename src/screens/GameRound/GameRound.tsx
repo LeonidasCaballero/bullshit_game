@@ -87,6 +87,12 @@ export const GameRound = (): JSX.Element => {
   // Al inicio del componente, añade:
   const [isVoting, setIsVoting] = useState(false);
 
+  // 1. Añadir esta variable al componente (cerca de los otros estados)
+  const [nonModeratorPlayers, setNonModeratorPlayers] = useState<Player[]>([]);
+
+  // 1. Añadir una variable para seguir la última acción
+  const [lastVoteTimestamp, setLastVoteTimestamp] = useState<number>(0);
+
   // Modificar el InsultPopup para hacerlo más bonito y añadir el nombre del moderador
   const InsultPopup = () => (
     <div className="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 animate-fadeIn">
@@ -201,47 +207,22 @@ export const GameRound = (): JSX.Element => {
           setAllPlayersVoted(allVoted);
 
           // Set up subscription for votes with error handling
-          const votesChannel = supabase.channel(`votes-${round.id}`, {
-            config: {
-              broadcast: { self: true },
-              presence: { key: round.id }
-            }
-          });
-
-          votesChannel
+          const votesChannel = supabase
+            .channel(`votes-${round.id}`)
             .on(
               'postgres_changes',
               {
-                event: '*',
+                event: 'INSERT',
                 schema: 'public',
                 table: 'votes',
                 filter: `round_id=eq.${round.id}`
               },
-              async () => {
-                try {
-                  const { data: latestVotes } = await supabase
-                    .from('votes')
-                    .select('*')
-                    .eq('round_id', round.id);
-                  
-                  if (latestVotes) {
-                    const allVoted = nonModeratorPlayers.every(player => 
-                      latestVotes.some(vote => vote.player_id === player.id)
-                    );
-                    setAllPlayersVoted(allVoted);
-                  }
-                } catch (err) {
-                  console.error('Error in votes subscription handler:', err);
-                }
+              (payload) => {
+                console.log('📥 Voto recibido en tiempo real:', payload);
+                loadVotes();
               }
             )
-            .subscribe((status) => {
-              if (status === 'SUBSCRIBED') {
-                console.log(`Subscribed to votes for round ${round.id}`);
-              } else if (status === 'CHANNEL_ERROR') {
-                console.error(`Error subscribing to votes for round ${round.id}`);
-              }
-            });
+            .subscribe();
 
           return () => {
             votesChannel.unsubscribe();
@@ -266,52 +247,66 @@ export const GameRound = (): JSX.Element => {
     }
   }, [round?.voting_phase, round?.id, round?.question_id, isModerator, currentPlayer?.id, players, moderator?.id, retryCount]);
 
-  // Primero, definimos la función para manejar el voto
-  const submitVote = async (selectedAnswer: string) => {
-    if (!round || !currentPlayer?.id || isVoting) return;
+  // 1. Añadir esta definición de función en cualquier lugar antes de usarla
+  // (cerca de la definición de loadVotes)
+  const fetchVotes = async () => {
+    if (!round?.id) return;
+    console.log('🔍 Cargando votos (alias de fetchVotes)');
+    
+    try {
+      const { data, error } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('round_id', round.id);
+        
+      if (error) throw error;
+      setVotes(data || []);
+    } catch (err) {
+      console.error('Error al cargar votos:', err);
+    }
+  };
+
+  // 2. Modificar la función handleVote para registrar cuándo votamos
+  const handleVote = async (optionContent: string) => {
+    if (!round?.id || !currentPlayer?.id) {
+      console.error('❌ No se puede votar: falta ID de ronda o jugador');
+      return;
+    }
+
+    console.log('✉️ Enviando voto:', {
+      roundId: round.id,
+      playerId: currentPlayer.id,
+      respuesta: optionContent
+    });
 
     try {
-      setIsVoting(true);
-      
-      // Verificar si el jugador ya ha votado
-      const { data: existingVote, error: checkError } = await supabase
+      // Simplemente insertar el voto
+      const { data, error } = await supabase
         .from('votes')
-        .select('id')
-        .eq('round_id', round.id)
-        .eq('player_id', currentPlayer.id)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-
-      if (existingVote) {
-        // Actualizar voto existente
-        const { error: updateError } = await supabase
-          .from('votes')
-          .update({ selected_answer: selectedAnswer })
-          .eq('id', existingVote.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Insertar nuevo voto
-        const { error: insertError } = await supabase
-          .from('votes')
-          .insert({
+        .insert({
           round_id: round.id,
           player_id: currentPlayer.id,
-            selected_answer: selectedAnswer
-          });
+          selected_answer: optionContent
+        })
+        .select();
 
-        if (insertError) throw insertError;
+      // Si hay error pero es de duplicación, considerarlo éxito
+      if (error) {
+        if (error.code === '23505') { // Código de violación de restricción unique
+          console.log('✓ Ya habías votado, ignorando duplicación');
+          setHasVoted(true);
+          setSelectedVote(optionContent);
+          return;
+        }
+        console.error('❌ Error al procesar voto:', error);
+        return;
       }
 
+      console.log('✅ Voto procesado correctamente:', data);
       setHasVoted(true);
-      setSelectedVote(selectedAnswer);
-
-    } catch (error) {
-      console.error('Error al votar:', error);
-      setError('No se pudo registrar tu voto');
-    } finally {
-      setTimeout(() => setIsVoting(false), 500);
+      setSelectedVote(optionContent);
+    } catch (err) {
+      console.error('❌ Error inesperado al votar:', err);
     }
   };
 
@@ -639,42 +634,75 @@ export const GameRound = (): JSX.Element => {
   };
 
   useEffect(() => {
-    if (!round?.voting_phase || !round.id) return;
-
-    console.log('🔄 Configurando suscripción a votos...');
-
-    // Suscribirse a cambios en los votos
-    const votesSubscription = subscribeToVotes(round.id, (payload) => {
-      console.log('📥 Nuevo voto recibido:', payload);
-      // Recargar los votos cuando haya cambios
-      fetchVotes();
-    });
-
-    // Guardar la referencia de la suscripción
-    votesChannelRef.current = votesSubscription;
-
+    if (!round?.id || !round.voting_phase || !isModerator) return;
+    
+    console.log('🔄 Configurando canal para escuchar votos - ID Ronda:', round.id);
+    
+    // Crear un canal con nombre único para evitar colisiones
+    const channelName = `votes-${round.id}-${Date.now()}`;
+    console.log('📢 Nombre del canal:', channelName);
+    
+    const channel = supabase.channel(channelName);
+    
+    // Suscribirse a cambios en la tabla votos
+    channel
+      .on('postgres_changes', {
+        event: 'INSERT',  // Solo nos interesan nuevas inserciones
+        schema: 'public',
+        table: 'votes',
+        filter: `round_id=eq.${round.id}`
+      }, (payload) => {
+        console.log('🔔 Nuevo voto recibido!', payload);
+        // Recargar votos al recibir uno nuevo
+        loadVotes();
+      })
+      .subscribe((status) => {
+        console.log(`🔌 Estado de suscripción: ${status}`);
+      });
+    
+    // Cargar votos iniciales
+    loadVotes();
+    
+    // Limpiar la suscripción al desmontar
     return () => {
-      console.log('🔄 Limpiando suscripción a votos...');
-      if (votesChannelRef.current) {
-        votesChannelRef.current.unsubscribe();
-      }
+      console.log('🛑 Cerrando canal de votos');
+      channel.unsubscribe();
     };
-  }, [round?.id, round?.voting_phase]);
+  }, [round?.id, round?.voting_phase, isModerator]);
 
-  // Función mejorada para cargar votos
-  const fetchVotes = async () => {
+  // Función para cargar todos los votos
+  const loadVotes = async () => {
     if (!round?.id) return;
-
-    try {
-      const { data: votesData, error } = await supabase
-        .from('votes')
-        .select('*')
-        .eq('round_id', round.id);
-
-      if (error) throw error;
-      setVotes(votesData || []);
-    } catch (err) {
-      console.error('Error fetching votes:', err);
+    
+    console.log('🔍 Cargando votos para ronda:', round.id);
+    
+    const { data, error } = await supabase
+      .from('votes')
+      .select('*')
+      .eq('round_id', round.id);
+    
+    if (error) {
+      console.error('❌ Error al cargar votos:', error);
+      return;
+    }
+    
+    console.log('📊 Votos cargados:', data?.length || 0, data);
+    setVotes(data || []);
+    
+    // Verificar si todos los jugadores han votado
+    if (players.length > 0 && moderator) {
+      const nonModPlayers = players.filter(p => p.id !== moderator.id);
+      const allVoted = nonModPlayers.every(player => 
+        data?.some(vote => vote.player_id === player.id)
+      );
+      
+      console.log('🗳️ Estado de votación:', {
+        jugadoresTotal: nonModPlayers.length,
+        votosRecibidos: data?.length || 0,
+        todosVotaron: allVoted
+      });
+      
+      setAllPlayersVoted(allVoted);
     }
   };
 
@@ -1007,6 +1035,51 @@ export const GameRound = (): JSX.Element => {
     }
   }, [round?.results_phase, fetchTotalScores]);
 
+  // 2. Calcular jugadores no moderadores cuando cambian los players o el moderador
+  useEffect(() => {
+    if (!players.length || !moderator) return;
+    
+    const filteredPlayers = players.filter(p => p.id !== moderator.id);
+    setNonModeratorPlayers(filteredPlayers);
+    console.log('👥 Jugadores (no moderadores):', filteredPlayers.length);
+  }, [players, moderator]);
+
+  // 3. Modificar la suscripción realtime para ignorar eventos recientes
+  useEffect(() => {
+    if (!round?.voting_phase || !round.id) return;
+    
+    // Canal para recibir votos
+    const channel = supabase
+      .channel(`votes-${round.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'votes',
+          filter: `round_id=eq.${round.id}`
+        },
+        (payload) => {
+          // Verificar si es un voto reciente nuestro
+          const isRecentOwnVote = 
+            Date.now() - lastVoteTimestamp < 5000 && // Menos de 5 segundos
+            payload.new && 
+            payload.new.player_id === currentPlayer?.id;
+            
+          if (isRecentOwnVote) {
+            console.log('📝 Ignorando notificación de nuestro propio voto');
+            return; // No procesar nuestros propios votos recientes
+          }
+          
+          console.log('📥 Voto recibido en tiempo real:', payload);
+          loadVotes();
+        }
+      )
+      .subscribe();
+    
+    return () => channel.unsubscribe();
+  }, [round?.id, round?.voting_phase, currentPlayer?.id, lastVoteTimestamp]);
+
   // Modificar para manejar correctamente la promesa de fetchTotalScores
   // Añadir estado para almacenar las puntuaciones totales
   if (isLoading) {
@@ -1167,7 +1240,7 @@ export const GameRound = (): JSX.Element => {
                       : 'border-transparent hover:border-[#CB1517] cursor-pointer'
                   }
                 `}
-                onClick={() => !hasVoted && submitVote(answer.content)}
+                onClick={() => !hasVoted && handleVote(answer.content)}
               >
                 <p 
                   className="text-[#131309] text-lg"
@@ -1187,7 +1260,7 @@ export const GameRound = (): JSX.Element => {
               <div className="max-w-[327px] mx-auto">
                 <Button
                   className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
-                  onClick={() => !hasVoted && selectedVote && submitVote(selectedVote)}
+                  onClick={() => !hasVoted && selectedVote && handleVote(selectedVote)}
                   disabled={hasVoted || !selectedVote}
                 >
                   Confirmar voto
@@ -1537,9 +1610,9 @@ export const GameRound = (): JSX.Element => {
                         className="text-[#131309] text-2xl"
                         style={{ fontFamily: 'Caveat, cursive' }}
                       >
-                        {card.content}
-                      </p>
-                    </div>
+                  {card.content}
+                </p>
+                  </div>
                   </div>
                 </div>
               ))}
