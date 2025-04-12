@@ -1,5 +1,5 @@
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import type { Player } from "../../lib/types";
 
@@ -156,7 +156,7 @@ export const GameScores = () => {
 
       <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
         <div className="space-y-4">
-          {playerScores.map((playerScore, index) => (
+          {playerScores.map((playerScore) => (
             <div 
               key={playerScore.player.id}
               className="flex flex-col p-4 bg-[#E7E7E6] rounded-[10px]"
@@ -172,21 +172,6 @@ export const GameScores = () => {
                   <span className="text-[#131309]">{playerScore.player.name}</span>
                 </div>
                 <span className="text-[#131309] font-bold">{playerScore.totalPoints} pts</span>
-              </div>
-
-              <div className="pl-11 space-y-1 text-sm text-gray-600">
-                {playerScore.correctVotePoints > 0 && (
-                  <div className="flex justify-between">
-                    <span>Acierto</span>
-                    <span>{playerScore.correctVotePoints} pts</span>
-                  </div>
-                )}
-                {playerScore.receivedVotesPoints > 0 && (
-                  <div className="flex justify-between">
-                    <span>Votos recibidos</span>
-                    <span>{playerScore.receivedVotesPoints} pts</span>
-                  </div>
-                )}
               </div>
             </div>
           ))}

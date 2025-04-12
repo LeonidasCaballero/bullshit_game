@@ -294,7 +294,7 @@ export const GameRound = (): JSX.Element => {
       if (error) {
         if (error.code === '23505') { // Código de violación de restricción unique
           console.log('✓ Ya habías votado, ignorando duplicación');
-          setHasVoted(true);
+      setHasVoted(true);
           setSelectedVote(optionContent);
           return;
         }
@@ -1228,28 +1228,26 @@ export const GameRound = (): JSX.Element => {
 
           {/* Lista de opciones de respuesta */}
           <div className="space-y-3">
-            {shuffledAnswers.map((answer, index) => (
-              <div 
+            {shuffledAnswers.map((answer, index) => {
+              // Determinar si esta respuesta es la del jugador actual
+              const isOwnAnswer = answer.playerId === currentPlayer?.id;
+              
+              return (
+                <div
                   key={index}
-                className={`
-                  bg-white rounded-[15px] p-4 border-2 transition-all
-                  ${selectedVote === answer.content 
-                    ? 'border-[#CB1517]' 
-                    : hasVoted 
-                      ? 'border-transparent opacity-50' 
-                      : 'border-transparent hover:border-[#CB1517] cursor-pointer'
-                  }
-                `}
-                onClick={() => !hasVoted && handleVote(answer.content)}
-              >
-                <p 
-                  className="text-[#131309] text-lg"
-                  style={{ fontFamily: 'Caveat, cursive' }}
+                  className={`w-full p-6 bg-white rounded-[20px] mb-4 border-2 transition-all
+                    ${selectedVote === answer.content ? 'border-[#000000]' : 'border-transparent'}
+                    ${isOwnAnswer ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'}
+                  `}
+                  onClick={() => !hasVoted && !isOwnAnswer && handleVote(answer.content)}
                 >
+                  <p className="text-[#131309] text-lg">
                     {answer.content}
+                    {isOwnAnswer && <span className="ml-2 text-[#CB1517] font-medium">(Tu respuesta)</span>}
                   </p>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
 
