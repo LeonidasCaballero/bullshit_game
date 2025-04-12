@@ -1,6 +1,10 @@
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
+=======
+import React, { useState, useEffect } from "react";
+>>>>>>> 4aae844 (Corregir error de tipado con useLocation en JoinGame)
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import type { Game } from "../../lib/types";
@@ -12,12 +16,17 @@ interface LocationState {
 
 export const JoinGame = (): JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { gameId } = useParams();
   const location = useLocation() as { state: LocationState };
   const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
   const [game, setGame] = useState<Game | null>(null);
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 4aae844 (Corregir error de tipado con useLocation en JoinGame)
   const isCreator = location.state?.isCreator;
   const gameName = location.state?.gameName;
 
