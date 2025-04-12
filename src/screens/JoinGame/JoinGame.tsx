@@ -1,32 +1,18 @@
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-<<<<<<< HEAD
-import { useState, useEffect } from "react";
-=======
 import React, { useState, useEffect } from "react";
->>>>>>> 4aae844 (Corregir error de tipado con useLocation en JoinGame)
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import type { Game } from "../../lib/types";
-
-interface LocationState {
-  isCreator?: boolean;
-  gameName?: string;
-}
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 
 export const JoinGame = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const { gameId } = useParams();
-  const location = useLocation() as { state: LocationState };
   const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
   const [game, setGame] = useState<Game | null>(null);
-<<<<<<< HEAD
-
-=======
   
->>>>>>> 4aae844 (Corregir error de tipado con useLocation en JoinGame)
   const isCreator = location.state?.isCreator;
   const gameName = location.state?.gameName;
 
@@ -53,41 +39,18 @@ export const JoinGame = (): JSX.Element => {
     }
     
     try {
-      // Crear un ID aleatorio para el jugador
-      const playerId = crypto.randomUUID();
-      
-      // Generar un color aleatorio para el avatar
-      const getRandomColor = () => {
-        const colors = [
-          "#F44336", "#E91E63", "#9C27B0", "#673AB7", 
-          "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4", 
-          "#009688", "#4CAF50", "#8BC34A", "#CDDC39"
-        ];
-        return colors[Math.floor(Math.random() * colors.length)];
-      };
-      
       const { error: playerError } = await supabase
         .from('players')
         .insert([
           { 
-            id: playerId,
             game_id: gameId, 
-            name: playerName.trim(),
-            avatar_color: getRandomColor()
+            name: playerName.trim()
           }
         ]);
 
       if (playerError) throw playerError;
       
-      // Guardar datos del jugador en localStorage para identificación simple
-      localStorage.setItem('bullshit_player_id', playerId);
-      localStorage.setItem('bullshit_player_name', playerName);
-      
-      navigate(`/game/${gameId}/lobby`, { 
-        state: { 
-          playerName: playerName.trim()
-        } 
-      });
+      navigate(`/game/${gameId}/lobby`, { state: { playerName: playerName.trim() } });
     } catch (err) {
       console.error('Error joining game:', err);
       setError("Error al unirse a la partida. Por favor, inténtalo de nuevo.");
@@ -115,16 +78,11 @@ export const JoinGame = (): JSX.Element => {
           </h1>
 
           <div className="w-full">
-<<<<<<< HEAD
-            <Card className="rounded-[20px] overflow-hidden border-none bg-white">
-              <CardContent className="p-5 space-y-5">
-=======
             <div className="bg-[#ffffff] rounded-[20px] shadow-md overflow-hidden" style={{backgroundColor: "#ffffff"}}>
               <div className="p-5 space-y-5">
->>>>>>> fix/question-data-issue
                 <h2 className="font-bold text-xl text-[#131309]">
                   {isCreator 
-                    ? `Has creado la partida "${gameName || game.name}"`
+                    ? `Has creado la partida "${gameName}"`
                     : 'Unirse a la partida'}
                 </h2>
 
