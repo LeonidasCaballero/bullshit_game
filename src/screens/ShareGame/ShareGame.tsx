@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Copy, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-import type { Game } from "../../lib/types";
 
 export const ShareGame = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const { gameId } = useParams();
   const [copied, setCopied] = useState(false);
-  const [, setGame] = useState<Game | null>(null);
+  const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   
@@ -46,7 +45,7 @@ export const ShareGame = (): JSX.Element => {
         }
       
         if (data) {
-          setGame(data);
+          // Verificar que el juego existe, pero no necesitamos guardar los datos
         } else {
           setError("Partida no encontrada");
         }
