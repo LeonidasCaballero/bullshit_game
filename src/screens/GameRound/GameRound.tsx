@@ -1,7 +1,7 @@
 import { Button } from "../../components/ui/button";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { supabase, subscribeToAnswers, subscribeToRound, subscribeToVotes } from "../../lib/supabase";
+import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supabase";
 import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
@@ -71,27 +71,24 @@ export const GameRound = (): JSX.Element => {
   const [hasVoted, setHasVoted] = useState(false);
   const [selectedVote, setSelectedVote] = useState<string | null>(null);
   const [allPlayersVoted, setAllPlayersVoted] = useState(false);
+  const [_showResults, _setShowResults] = useState(false);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [resultsCountdown, setResultsCountdown] = useState<number>(20);
   
   const answersChannelRef = useRef<any>(null);
   const roundChannelRef = useRef<any>(null);
-  const votesChannelRef = useRef<any>(null);
 
   const [slideDirection, setSlideDirection] = useState('right');
   const [exitingCards, setExitingCards] = useState<ExitingCard[]>([]);
 
   const [showInsult, setShowInsult] = useState(false);
   const [insultoActual, setInsultoActual] = useState("");
-
-  // Al inicio del componente, añade:
-  const [isVoting, setIsVoting] = useState(false);
-
-  // 1. Añadir esta variable al componente (cerca de los otros estados)
-  const [nonModeratorPlayers, setNonModeratorPlayers] = useState<Player[]>([]);
-
+  
+  // Restaurar esta variable de estado
+  const [_nonModeratorPlayers, setNonModeratorPlayers] = useState<Player[]>([]);
+  
   // 1. Añadir una variable para seguir la última acción
-  const [lastVoteTimestamp, setLastVoteTimestamp] = useState<number>(0);
+  const [_lastVoteTimestamp, _setLastVoteTimestamp] = useState<number>(0);
 
   // Modificar el InsultPopup para hacerlo más bonito y añadir el nombre del moderador
   const InsultPopup = () => (
@@ -249,25 +246,9 @@ export const GameRound = (): JSX.Element => {
 
   // 1. Añadir esta definición de función en cualquier lugar antes de usarla
   // (cerca de la definición de loadVotes)
-  const fetchVotes = async () => {
-    if (!round?.id) return;
-    console.log('🔍 Cargando votos (alias de fetchVotes)');
-    
-    try {
-      const { data, error } = await supabase
-        .from('votes')
-        .select('*')
-        .eq('round_id', round.id);
-        
-      if (error) throw error;
-      setVotes(data || []);
-    } catch (err) {
-      console.error('Error al cargar votos:', err);
-    }
-  };
 
   // 2. Modificar la función handleVote para registrar cuándo votamos
-  const handleVote = async (optionContent: string) => {
+  const handleVote = async (selectedContent: string) => {
     if (!round?.id || !currentPlayer?.id) {
       console.error('❌ No se puede votar: falta ID de ronda o jugador');
       return;
@@ -276,7 +257,7 @@ export const GameRound = (): JSX.Element => {
     console.log('✉️ Enviando voto:', {
       roundId: round.id,
       playerId: currentPlayer.id,
-      respuesta: optionContent
+      respuesta: selectedContent
     });
 
     try {
@@ -286,7 +267,7 @@ export const GameRound = (): JSX.Element => {
         .insert({
           round_id: round.id,
           player_id: currentPlayer.id,
-          selected_answer: optionContent
+          selected_answer: selectedContent
         })
         .select();
 
@@ -295,7 +276,7 @@ export const GameRound = (): JSX.Element => {
         if (error.code === '23505') { // Código de violación de restricción unique
           console.log('✓ Ya habías votado, ignorando duplicación');
       setHasVoted(true);
-          setSelectedVote(optionContent);
+          setSelectedVote(selectedContent);
           return;
         }
         console.error('❌ Error al procesar voto:', error);
@@ -304,7 +285,9 @@ export const GameRound = (): JSX.Element => {
 
       console.log('✅ Voto procesado correctamente:', data);
       setHasVoted(true);
-      setSelectedVote(optionContent);
+      setSelectedVote(selectedContent);
+      // Actualizar la marca de tiempo al votar
+      _setLastVoteTimestamp(Date.now());
     } catch (err) {
       console.error('❌ Error inesperado al votar:', err);
     }
@@ -1048,37 +1031,43 @@ export const GameRound = (): JSX.Element => {
   useEffect(() => {
     if (!round?.voting_phase || !round.id) return;
     
+    // Definir el handler de eventos para los votos
+    const handleVoteReceived = (payload: any) => {
+      // Verificar si es un voto reciente nuestro
+      const isRecentOwnVote = 
+        Date.now() - _lastVoteTimestamp < 5000 && // Menos de 5 segundos
+        payload.new && 
+        payload.new.player_id === currentPlayer?.id;
+        
+      if (isRecentOwnVote) {
+        console.log('📝 Ignorando notificación de nuestro propio voto');
+        return; // No procesar nuestros propios votos recientes
+      }
+      
+      console.log('📥 Voto recibido en tiempo real:', payload);
+      loadVotes();
+    };
+    
     // Canal para recibir votos
-    const channel = supabase
+    const votesChannel = supabase
       .channel(`votes-${round.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'votes',
-          filter: `round_id=eq.${round.id}`
-        },
-        (payload) => {
-          // Verificar si es un voto reciente nuestro
-          const isRecentOwnVote = 
-            Date.now() - lastVoteTimestamp < 5000 && // Menos de 5 segundos
-            payload.new && 
-            payload.new.player_id === currentPlayer?.id;
-            
-          if (isRecentOwnVote) {
-            console.log('📝 Ignorando notificación de nuestro propio voto');
-            return; // No procesar nuestros propios votos recientes
-          }
-          
-          console.log('📥 Voto recibido en tiempo real:', payload);
-          loadVotes();
-        }
-      )
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'votes',
+        filter: `round_id=eq.${round.id}`
+      }, handleVoteReceived)
       .subscribe();
     
-    return () => channel.unsubscribe();
-  }, [round?.id, round?.voting_phase, currentPlayer?.id, lastVoteTimestamp]);
+    // Función de limpieza
+    return () => {
+      // La función unsubscribe devuelve una Promise, pero debemos adaptar esto
+      // para que sea compatible con React useEffect
+      const promise = votesChannel.unsubscribe();
+      // No devolvemos la Promise directamente
+      void promise;
+    };
+  }, [round?.id, round?.voting_phase, currentPlayer?.id, _lastVoteTimestamp]);
 
   // Modificar para manejar correctamente la promesa de fetchTotalScores
   // Añadir estado para almacenar las puntuaciones totales
@@ -1231,7 +1220,7 @@ export const GameRound = (): JSX.Element => {
             {shuffledAnswers.map((answer, index) => {
               // Determinar si esta respuesta es la del jugador actual
               const isOwnAnswer = answer.playerId === currentPlayer?.id;
-              
+
               return (
                 <div
                   key={index}
@@ -1243,7 +1232,7 @@ export const GameRound = (): JSX.Element => {
                 >
                   <p className="text-[#131309] text-lg">
                     {answer.content}
-                    {isOwnAnswer && <span className="ml-2 text-[#CB1517] font-medium">(Tu respuesta)</span>}
+                    {isOwnAnswer && <span className="ml-2 text-[#804000] font-medium">(Tu respuesta)</span>}
                   </p>
                 </div>
               );
@@ -1295,7 +1284,6 @@ export const GameRound = (): JSX.Element => {
   }
 
   if (round?.results_phase) {
-    const totalScores = fetchTotalScores();
 
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
@@ -1331,7 +1319,6 @@ export const GameRound = (): JSX.Element => {
                 const isCurrentPlayer = player.id === currentPlayer?.id;
                 const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
                 const isCorrectVote = playerVote === question?.correct_answer;
-                const totalPoints = totalScores[playerId as keyof typeof totalScores] || 0;
                 
                 // Determinar el estilo de borde para el jugador actual
                 let borderStyle = '';
@@ -1378,9 +1365,6 @@ export const GameRound = (): JSX.Element => {
                       <div className="flex flex-col items-end">
                         <div className="bg-[#9FFF00] px-3 py-1 rounded-full font-bold">
                           +{points} pts
-                        </div>
-                        <div className="text-sm mt-1">
-                          Total: {Number(totalPoints) + Number(points)} pts
                         </div>
                       </div>
                     </div>
@@ -1794,6 +1778,23 @@ export const GameRound = (): JSX.Element => {
                     <div className="max-w-[327px] mx-auto flex flex-col items-center">
                       {pendingPlayers.length > 0 ? (
                         <>
+                          <p className="text-[#131309] text-base sm:text-lg font-bold mb-4 whitespace-nowrap">
+                            Quedan por responder: {pendingPlayers.length > 0 ? (
+                              <>
+                                {pendingPlayers[0]?.name}
+                                {pendingPlayers.length > 1 && (
+                                  <>
+                                    {pendingPlayers.length === 2 ? ' y ' : ', '}
+                                    {pendingPlayers[1]?.name}
+                                    {pendingPlayers.length > 2 && ` y ${pendingPlayers.length - 2} más`}
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              "Nadie"
+                            )}
+                          </p>
+                          
                           <Button
                             className="w-full h-12 bg-[#131309] hover:bg-[#131309] rounded-[10px] font-bold text-base mb-6 relative overflow-hidden group"
                             onClick={async () => {
@@ -1818,35 +1819,15 @@ export const GameRound = (): JSX.Element => {
                             
                             <span className="relative z-10 text-white">Insulta al resto</span>
                           </Button>
-                          <p className="text-[#131309] text-base sm:text-lg font-bold mb-4 whitespace-nowrap">
-                            Quedan {pendingPlayers.length} jugadores por responder:
-                          </p>
-                          <div className="w-full space-y-2 mb-4">
-                            {pendingPlayers.map(player => (
-                              <div 
-                                key={player.id}
-                                className="flex items-center gap-3 p-3 bg-[#E7E7E6] rounded-[10px]"
-                              >
-                                <div 
-                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-base"
-                                  style={{ backgroundColor: player.avatar_color }}
-                                >
-                                  {player.name.charAt(0).toUpperCase()}
-                                </div>
-                                <span className="flex-1 font-normal text-base text-[#131309]">
-                                  {player.name}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
                         </>
                       ) : (
                         <p className="text-[#131309] text-base mb-4">
                           ¡Todas las respuestas recibidas!
                         </p>
                       )}
+                      
                       <Button
-                        className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] text-white rounded-[10px] font-bold text-base"
+                        className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
                         onClick={handleStartReadingAnswers}
                         disabled={pendingPlayers.length > 0}
                       >

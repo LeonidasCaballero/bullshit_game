@@ -13,7 +13,8 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#804000",
+          hover: "#603000",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {

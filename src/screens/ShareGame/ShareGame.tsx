@@ -144,7 +144,7 @@ export const ShareGame = (): JSX.Element => {
               className={`w-8 h-8 p-0 rounded-full ml-2 ${
                 copied
                   ? "bg-green-500 hover:bg-green-600"
-                  : "bg-[#CB1517] hover:bg-[#B31315]"
+                  : "bg-[#804000] hover:bg-[#603000]"
               }`}
               onClick={handleCopyLink}
             >
@@ -164,7 +164,7 @@ export const ShareGame = (): JSX.Element => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <Button
-              className="flex-1 h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+              className="flex-1 h-12 bg-[#804000] hover:bg-[#603000] rounded-[10px] font-bold text-base"
               onClick={handleContinue}
             >
               Siguiente

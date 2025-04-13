@@ -396,6 +396,38 @@ export const GameLobby = (): JSX.Element => {
     }
   };
 
+  // Añadir función para compartir
+  const handleShare = async () => {
+    // Crear la URL para unirse a la partida
+    const shareUrl = `${window.location.origin}/game/${gameId}`;
+    
+    // Verificar si la API de compartir está disponible
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `¡Únete a ${game?.name || 'nuestra partida'}!`,
+          text: '¡Ven a jugar Bullshit con nosotros!',
+          url: shareUrl
+        });
+        console.log('Enlace compartido con éxito');
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error al compartir:', error);
+        }
+      }
+    } else {
+      // Fallback para navegadores que no soportan la API Share
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        // Aquí podrías mostrar un toast o notificación
+        alert('Enlace copiado al portapapeles');
+      } catch (error) {
+        console.error('Error al copiar al portapapeles:', error);
+        // Fallback manual
+        prompt('Copia este enlace para compartir la partida:', shareUrl);
+      }
+    }
+  };
 
   // Efecto para las animaciones secuenciales
   useEffect(() => {
@@ -479,7 +511,7 @@ export const GameLobby = (): JSX.Element => {
           <p className="text-[#131309] text-xl">
             {players.length} {players.length === 1 ? 'jugador' : 'jugadores'} en la partida
           </p>
-          <button className="text-[#131309]">
+          <button className="text-[#131309]" onClick={handleShare}>
             <Share2 className="w-6 h-6" />
           </button>
         </div>
@@ -512,7 +544,7 @@ export const GameLobby = (): JSX.Element => {
               Eres el primero en llegar. Comienza la partida cuando estéis todos aquí.
             </p>
             <Button
-              className="w-full h-12 bg-[#cb1517] hover:bg-[#b31315] text-white rounded-[10px] font-bold text-base"
+              className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
               onClick={handleStartGame}
               disabled={isStartingGame}
             >

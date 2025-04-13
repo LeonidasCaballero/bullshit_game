@@ -186,7 +186,7 @@ export const GameScores = () => {
               <span className="text-xl font-bold mb-4">{countdown}s</span>
               <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
+                  className="h-full bg-[#804000] transition-all duration-1000 ease-linear"
                   style={{ width: `${(countdown / 10) * 100}%` }}
                 />
               </div>

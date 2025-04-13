@@ -18,7 +18,7 @@ export const InsultPopup = ({ moderator, insultoActual, onClose }: InsultPopupPr
       </button>
       
       <div className="flex flex-col items-center">
-        <div className="w-16 h-16 bg-[#CB1517] rounded-full flex items-center justify-center mb-4 animate-pulse">
+        <div className="w-16 h-16 bg-[#804000] rounded-full flex items-center justify-center mb-4 animate-pulse">
           <span className="text-white text-3xl">🔥</span>
         </div>
         
