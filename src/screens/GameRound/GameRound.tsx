@@ -1410,6 +1410,23 @@ export const GameRound = (): JSX.Element => {
               })}
           </div>
         </div>
+
+        {/* Barra inferior con cuenta atrás hacia la siguiente ronda */}
+        <div className="fixed bottom-0 left-0 right-0">
+          <div className="bg-white w-full px-6 pt-5 pb-8">
+            <div className="max-w-[327px] mx-auto flex flex-col items-center">
+              <p className="text-[#131309] text-xl font-bold mb-4 text-center">
+                Siguiente ronda en {resultsCountdown}
+              </p>
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
+                  style={{ width: `${(resultsCountdown / 20) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
