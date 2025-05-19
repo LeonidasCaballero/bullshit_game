@@ -274,7 +274,7 @@ export const GameRound = (): JSX.Element => {
       if (error) {
         if (error.code === '23505') {
           console.log('✓ Ya habías votado, ignorando duplicación');
-          setHasVoted(true);
+      setHasVoted(true);
           setSelectedVote(selectedContent);
           return;
         }
@@ -1304,15 +1304,15 @@ export const GameRound = (): JSX.Element => {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="text-[#131309] text-lg">Cargando resultados...</p>
-        </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    return (
-      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+  return (
+    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-          BULLSHIT
-        </h1>
+        BULLSHIT
+      </h1>
         <div className="w-full max-w-md px-4 mt-8 mb-28">
           <div className="bg-[#131309] rounded-[20px] p-6 mb-4">
             <h2 className="text-white text-xl font-bold text-center mb-2">
@@ -1449,8 +1449,8 @@ export const GameRound = (): JSX.Element => {
 
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">BULLSHIT</h1>
 
-        {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
-          <>
+      {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
+        <>
             {/* Vista del moderador mientras lee las respuestas */}
             <div className="w-full max-w-[375px] mt-8 mb-28">
               <div className="text-center mb-6">
@@ -1463,8 +1463,8 @@ export const GameRound = (): JSX.Element => {
               <div className="bg-[#131309] rounded-[20px] px-8 py-4 mb-6">
                 <p className="text-white text-center">
                   Lee las respuestas al resto de jugadores. Se han ordenado aleatoriamente junto a la respuesta real.
-                </p>
-              </div>
+              </p>
+            </div>
 
               <AnswerCardStack
                 shuffledAnswers={shuffledAnswers}
@@ -1508,8 +1508,8 @@ export const GameRound = (): JSX.Element => {
               </p>
             </div>
           </div>
-        )}
-      </div>
+                )}
+              </div>
     );
   }
 
@@ -1526,15 +1526,15 @@ export const GameRound = (): JSX.Element => {
             <div className="text-center mb-6">
               <p className="text-[#131309] text-lg font-bold">
                 {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
-              </p>
-            </div>
+                </p>
+              </div>
 
             <div className="bg-[#131309] rounded-[20px] p-6 px-8 py-4 mb-6">
               <p className="text-white text-center">
                 Lee las respuestas al resto de jugadores.
                 Se han ordenado aleatoriamente junto a la respuesta real.
               </p>
-            </div>
+          </div>
 
             <AnswerCardStack
               shuffledAnswers={shuffledAnswers}
