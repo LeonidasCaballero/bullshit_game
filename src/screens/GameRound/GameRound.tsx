@@ -623,8 +623,10 @@ export const GameRound = (): JSX.Element => {
   };
 
   useEffect(() => {
-    if (!round?.id || !round.voting_phase || !isModerator) return;
-    
+    // Suscribirse a los votos tanto en fase de votación como en fase de resultados,
+    // y hacerlo para todos los jugadores (moderador y no-moderador).
+    if (!round?.id || !(round.voting_phase || round.results_phase)) return;
+
     console.log('🔄 Configurando canal para escuchar votos - ID Ronda:', round.id);
     
     // Crear un canal con nombre único para evitar colisiones
@@ -656,7 +658,15 @@ export const GameRound = (): JSX.Element => {
       console.log('🛑 Cerrando canal de votos');
       channel.unsubscribe();
     };
-  }, [round?.id, round?.voting_phase, isModerator]);
+  }, [round?.id, round?.voting_phase, round?.results_phase]);
+
+  // Llamar a loadVotes en cuanto entremos en la fase de resultados para asegurarnos
+  // de que todos los jugadores tienen la lista más reciente (incluido su propio voto).
+  useEffect(() => {
+    if (round?.results_phase) {
+      loadVotes();
+    }
+  }, [round?.results_phase]);
 
   // Función para cargar todos los votos
   const loadVotes = async () => {
