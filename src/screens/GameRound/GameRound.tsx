@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supabase";
 import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
+import { AnswerCardStack } from "./components/AnswerCardStack";
 import type { Round, Player, Question, Answer, Vote } from "../../lib/types";
 
 // Add this with other interfaces
@@ -250,18 +251,17 @@ export const GameRound = (): JSX.Element => {
   // 2. Modificar la función handleVote para registrar cuándo votamos
   const handleVote = async (selectedContent: string) => {
     if (!round?.id || !currentPlayer?.id) {
-      console.error('❌ No se puede votar: falta ID de ronda o jugador');
+      console.error('[LOG] No se puede votar: falta ID de ronda o jugador');
       return;
     }
 
-    console.log('✉️ Enviando voto:', {
+    console.log('[LOG] Usuario va a votar:', {
       roundId: round.id,
       playerId: currentPlayer.id,
       respuesta: selectedContent
     });
 
     try {
-      // Simplemente insertar el voto
       const { data, error } = await supabase
         .from('votes')
         .insert({
@@ -271,11 +271,10 @@ export const GameRound = (): JSX.Element => {
         })
         .select();
 
-      // Si hay error pero es de duplicación, considerarlo éxito
       if (error) {
-        if (error.code === '23505') { // Código de violación de restricción unique
+        if (error.code === '23505') {
           console.log('✓ Ya habías votado, ignorando duplicación');
-      setHasVoted(true);
+          setHasVoted(true);
           setSelectedVote(selectedContent);
           return;
         }
@@ -286,8 +285,15 @@ export const GameRound = (): JSX.Element => {
       console.log('✅ Voto procesado correctamente:', data);
       setHasVoted(true);
       setSelectedVote(selectedContent);
-      // Actualizar la marca de tiempo al votar
       _setLastVoteTimestamp(Date.now());
+
+      setTimeout(() => {
+        console.log('[LOG] Estado de votos tras votar (después de posible suscripción):', votes);
+        const myVote = votes.find(v => v.player_id === currentPlayer.id);
+        if (!myVote) {
+          console.warn("⚠️ Tras votar, el voto propio NO está en el array de votos.");
+        }
+      }, 1000);
     } catch (err) {
       console.error('❌ Error inesperado al votar:', err);
     }
@@ -635,8 +641,7 @@ export const GameRound = (): JSX.Element => {
         table: 'votes',
         filter: `round_id=eq.${round.id}`
       }, (payload) => {
-        console.log('🔔 Nuevo voto recibido!', payload);
-        // Recargar votos al recibir uno nuevo
+        console.log('[LOG] Voto recibido por suscripción:', payload);
         loadVotes();
       })
       .subscribe((status) => {
@@ -657,45 +662,31 @@ export const GameRound = (): JSX.Element => {
   const loadVotes = async () => {
     if (!round?.id) return;
     
-    console.log('🔍 Cargando votos para ronda:', round.id);
-    
+    console.log("[LOG] Llamando a loadVotes para la ronda:", round.id);
+
     const { data, error } = await supabase
       .from('votes')
       .select('*')
       .eq('round_id', round.id);
-    
+
     if (error) {
-      console.error('❌ Error al cargar votos:', error);
+      console.error('[LOG] Error al cargar votos:', error);
       return;
     }
-    
-    console.log('📊 Votos cargados:', data?.length || 0, data);
+
+    console.log('[LOG] Votos recibidos de la base de datos:', data);
+
     setVotes(data || []);
-    
-    // Verificar si todos los jugadores han votado
-    if (players.length > 0 && moderator) {
-      const nonModPlayers = players.filter(p => p.id !== moderator.id);
-      const allVoted = nonModPlayers.every(player => 
-        data?.some(vote => vote.player_id === player.id)
-      );
-      
-      console.log('🗳️ Estado de votación:', {
-        jugadoresTotal: nonModPlayers.length,
-        votosRecibidos: data?.length || 0,
-        todosVotaron: allVoted
-      });
-      
-      setAllPlayersVoted(allVoted);
-    }
   };
 
+  // Mantener solo una implementación de handleRevealResults con la lógica completa
   const handleRevealResults = async () => {
     if (!round) return;
     
     try {
       console.log('🏆 Revelando resultados...');
       
-      // Actualizar la base de datos correctamente
+      // Actualizar la base de datos
       const { error: updateError } = await supabase
         .from('rounds')
         .update({ 
@@ -706,14 +697,14 @@ export const GameRound = (): JSX.Element => {
 
       if (updateError) throw updateError;
       
-      // Actualizar el objeto round con los cambios correctos
+      // Actualizar el estado local
       const updatedRound = {
         ...round, 
         results_phase: true,
         voting_phase: false
       };
       
-      // Enviar broadcast con el estado correcto
+      // Enviar broadcast para sincronizar todos los clientes
       supabase
         .channel(`round-updates-${round.id}`)
         .send({
@@ -1182,7 +1173,7 @@ export const GameRound = (): JSX.Element => {
             {allVoted && (
               <button
                 onClick={() => handleRevealResults()}
-                className="w-full mt-6 p-4 bg-[#CB1517] hover:bg-[#B31315] text-white font-bold rounded-[10px] transition-colors"
+                className="w-full mt-6 p-4 bg-[#804000] hover:bg-[#603000] text-white font-bold rounded-[10px] transition-colors"
               >
                 Revelar resultados
               </button>
@@ -1284,13 +1275,34 @@ export const GameRound = (): JSX.Element => {
   }
 
   if (round?.results_phase) {
+    console.log("[LOG] ENTRANDO EN FASE DE RESULTADOS");
+    console.log("Usuario actual:", currentPlayer);
+    console.log("Ronda:", round);
+    console.log("Votos actuales:", votes);
+    console.log("calculateScores():", calculateScores());
+    const myVote = votes.find(v => v.player_id === currentPlayer?.id);
+    console.log("Mi voto:", myVote);
+    if (!myVote) {
+      console.warn("⚠️ El voto del usuario actual NO está en el array de votos.");
+    }
 
-  return (
-    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+    // Loader SOLO si no es moderador y aún no está el voto propio
+    if (
+      !isModerator &&
+      !votes.find(v => v.player_id === currentPlayer?.id)
+    ) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <p className="text-[#131309] text-lg">Cargando resultados...</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
         <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-        BULLSHIT
-      </h1>
-      
+          BULLSHIT
+        </h1>
         <div className="w-full max-w-md px-4 mt-8 mb-28">
           <div className="bg-[#131309] rounded-[20px] p-6 mb-4">
             <h2 className="text-white text-xl font-bold text-center mb-2">
@@ -1300,32 +1312,28 @@ export const GameRound = (): JSX.Element => {
               {question?.text}: <span className="font-bold">{question?.correct_answer}</span>
             </p>
           </div>
-          
           <div className="space-y-4">
             {Object.entries(calculateScores())
               .sort(([playerIdA, scoreA], [playerIdB, scoreB]) => {
-                // Si uno de ellos es el moderador, ponerlo al final
                 if (playerIdA === round?.moderator_id) return 1;
                 if (playerIdB === round?.moderator_id) return -1;
-                
-                // De lo contrario, ordenar por puntos (mayor a menor)
                 return scoreB.points - scoreA.points;
               })
               .map(([playerId, {points, details, playerAnswer}]) => {
                 const player = players.find(p => p.id === playerId);
                 if (!player) return null;
-                
+
                 const isPlayerModerator = player.id === round?.moderator_id;
                 const isCurrentPlayer = player.id === currentPlayer?.id;
                 const playerVote = votes.find(v => v.player_id === playerId)?.selected_answer;
                 const isCorrectVote = playerVote === question?.correct_answer;
-                
+
                 // Determinar el estilo de borde para el jugador actual
                 let borderStyle = '';
                 if (isCurrentPlayer && !isPlayerModerator) {
                   borderStyle = isCorrectVote ? 'border-2 border-[#9FFF00]' : 'border-2 border-[#CB1517]';
                 }
-                
+
                 return (
                   <div 
                     key={playerId} 
@@ -1359,7 +1367,11 @@ export const GameRound = (): JSX.Element => {
                           )}
                         </div>
                         {!isPlayerModerator && (
-                          <p className="text-sm">{isCorrectVote ? '✅ Votó correctamente' : '❌ Engañado'}</p>
+                          <p className="text-sm">
+                            {playerVote
+                              ? (isCorrectVote ? '✅ Votó correctamente' : '❌ Engañado')
+                              : '❌ No votó'}
+                          </p>
                         )}
                       </div>
                       <div className="flex flex-col items-end">
@@ -1387,22 +1399,6 @@ export const GameRound = (): JSX.Element => {
                 );
               })}
           </div>
-          
-          {resultsCountdown > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white p-4">
-              <div className="max-w-[327px] mx-auto">
-                <div className="flex flex-col items-center">
-                  <span className="text-xl font-bold mb-4">{resultsCountdown}s</span>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
-                      style={{ width: `${(resultsCountdown / 20) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -1421,128 +1417,72 @@ export const GameRound = (): JSX.Element => {
   if (round?.reading_phase) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
-        {/* Solo mostrar el overlay para los no moderadores */}
+        {/* Overlay solo para no-moderadores */}
         {!isModerator && <ReadingOverlay />}
 
-        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
-          BULLSHIT
-        </h1>
+        <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">BULLSHIT</h1>
 
-        {/* Solo mostrar las cards si es moderador y está en fase de lectura */}
-      {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
-        <>
+        {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
+          <>
+            {/* Vista del moderador mientras lee las respuestas */}
             <div className="w-full max-w-[375px] mt-8 mb-28">
               <div className="text-center mb-6">
                 <p className="text-[#131309] text-lg font-bold">
-                  {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
+                  {question?.text.replace(/\.$/, '')}{' '}
+                  <span className="italic">{question?.content}</span>?
                 </p>
               </div>
 
-              <div className="bg-[#131309] rounded-[20px] p-6 px-8 py-4 mb-6">
+              <div className="bg-[#131309] rounded-[20px] px-8 py-4 mb-6">
                 <p className="text-white text-center">
-                Lee las respuestas al resto de jugadores.
-                Se han ordenado aleatoriamente junto a la respuesta real.
-              </p>
-            </div>
-
-              <div className="relative h-[300px]">
-                {exitingCards.map(card => (
-                  <div
-                    key={`exiting-${card.index}`}
-                    className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
-                      slideDirection === 'left' ? 'animate-exitLeft' : 'animate-exitRight'
-                    }`}
-                    style={{
-                      zIndex: 100 + card.index,
-                      transform: `rotate(${(card.index % 3 - 1) * 2}deg)`,
-                    }}
-                  >
-                    <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
-                      <div className="flex items-center justify-between mb-4">
-                        <p className="text-[#131309] text-xl">
-                          Opción {card.index + 1} de {shuffledAnswers.length}
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-[10px] p-4 h-[200px]">
-                        <p 
-                          className="text-[#131309] text-2xl"
-                          style={{ fontFamily: 'Caveat, cursive' }}
-                        >
-                          {card.content}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Carta actual con animación */}
-                <div 
-                  className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
-                    slideDirection === 'left' 
-                      ? 'animate-slideLeft' 
-                      : 'animate-slideRight'
-                  }`}
-                  style={{
-                    zIndex: currentAnswerIndex + 1,
-                    transform: `rotate(${(currentAnswerIndex % 3 - 1) * 2}deg)`,
-                  }}
-                >
-                  <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[#131309] text-xl">
-                  Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
+                  Lee las respuestas al resto de jugadores. Se han ordenado aleatoriamente junto a la respuesta real.
                 </p>
-                    </div>
-                    <div className="bg-white rounded-[10px] p-4 h-[200px]">
-                      <p 
-                        className="text-[#131309] text-2xl"
-                        style={{ fontFamily: 'Caveat, cursive' }}
-                      >
-                        {shuffledAnswers[currentAnswerIndex].content}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
-            </div>
 
+              <AnswerCardStack
+                shuffledAnswers={shuffledAnswers}
+                exitingCards={exitingCards}
+                slideDirection={slideDirection as 'left' | 'right'}
+                currentAnswerIndex={currentAnswerIndex}
+              />
+
+            </div> {/* cierra contenedor cards moderador */}
+
+            {/* Navegación inferior */}
             <div className="fixed bottom-0 left-0 right-0">
               <div className="bg-white w-full px-6 pt-5 pb-8">
                 <div className="max-w-[327px] mx-auto flex gap-3">
-                  <Button
-                    variant="secondary"
+                  <button
                     onClick={handlePrevAnswer}
+                    className="w-12 h-12 bg-[#E7E7E6] hover:bg-[#d1d1d0] rounded-[10px] flex items-center justify-center"
                     disabled={currentAnswerIndex === 0}
-                    className="w-12 h-12 bg-[#E7E7E6] rounded-[10px] flex items-center justify-center"
                   >
-                    <ChevronLeft className="w-6 h-6" />
-                  </Button>
-                  <Button
-                    className="flex-1 h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+                    <ChevronLeft className="w-6 h-6 text-[#131309]" />
+                  </button>
+                  <button
                     onClick={handleNextAnswer}
+                    className="flex-1 h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
                   >
-                    {currentAnswerIndex === shuffledAnswers.length - 1 ? "Finalizar" : "Siguiente"}
-                  </Button>
+                    Siguiente
+                  </button>
                 </div>
               </div>
             </div>
           </>
         ) : (
+          /* Vista para participantes (o moderador antes de leer) */
           <div className="w-full max-w-[375px] mt-8 space-y-4">
             <div className="bg-[#131309] rounded-[20px] p-6">
-              <p className="text-white text-xl text-center">
-                {question?.text}
-              </p>
+              <p className="text-white text-xl text-center">{question?.text}</p>
             </div>
-
             <div className="bg-white rounded-[20px] p-4">
               <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
-                {question.content}
+                {question?.content}
               </p>
             </div>
           </div>
-                )}
-              </div>
+        )}
+      </div>
     );
   }
 
@@ -1569,84 +1509,32 @@ export const GameRound = (): JSX.Element => {
               </p>
             </div>
 
-            <div className="relative h-[300px]">
-              {exitingCards.map(card => (
-                <div
-                  key={`exiting-${card.index}`}
-                  className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
-                    slideDirection === 'left' ? 'animate-exitLeft' : 'animate-exitRight'
-                  }`}
-                  style={{
-                    zIndex: 100 + card.index,
-                    transform: `rotate(${(card.index % 3 - 1) * 2}deg)`,
-                  }}
-                >
-                  <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-[#131309] text-xl">
-                        Opción {card.index + 1} de {shuffledAnswers.length}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-[10px] p-4 h-[200px]">
-                      <p 
-                        className="text-[#131309] text-2xl"
-                        style={{ fontFamily: 'Caveat, cursive' }}
-                      >
-                  {card.content}
-                </p>
-                  </div>
-                  </div>
-                </div>
-              ))}
+            <AnswerCardStack
+              shuffledAnswers={shuffledAnswers}
+              exitingCards={exitingCards}
+              slideDirection={slideDirection as 'left' | 'right'}
+              currentAnswerIndex={currentAnswerIndex}
+            />
 
-              {/* Carta actual con animación */}
-              <div 
-                className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
-                  slideDirection === 'left' 
-                    ? 'animate-slideLeft' 
-                    : 'animate-slideRight'
-                }`}
-                style={{
-                  zIndex: currentAnswerIndex + 1,
-                  transform: `rotate(${(currentAnswerIndex % 3 - 1) * 2}deg)`,
-                }}
-              >
-                <div className="bg-white rounded-[20px] p-6 relative shadow-md h-[300px]">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-[#131309] text-xl">
-                      Opción {currentAnswerIndex + 1} de {shuffledAnswers.length}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-[10px] p-4 h-[200px]">
-                    <p 
-                      className="text-[#131309] text-2xl"
-                      style={{ fontFamily: 'Caveat, cursive' }}
-                    >
-                  {shuffledAnswers[currentAnswerIndex].content}
-                </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          </div> {/* cierra contenedor cards moderador fuera de reading_phase */}
 
           <div className="fixed bottom-0 left-0 right-0">
             <div className="bg-white w-full px-6 pt-5 pb-8">
               <div className="max-w-[327px] mx-auto flex gap-3">
-                <Button
-                  variant="secondary"
+                <button
                   onClick={handlePrevAnswer}
+                  className="w-12 h-12 bg-[#E7E7E6] hover:bg-[#d1d1d0] rounded-[10px] flex items-center justify-center"
                   disabled={currentAnswerIndex === 0}
-                  className="w-12 h-12 bg-[#E7E7E6] rounded-[10px] flex items-center justify-center"
                 >
-                  <ChevronLeft className="w-6 h-6" />
-                </Button>
-                <Button
-                  className="flex-1 h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+                  <ChevronLeft className="w-6 h-6 text-[#131309]" />
+                </button>
+                
+                <button
                   onClick={handleNextAnswer}
+                  className="flex-1 h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
                 >
-                  {currentAnswerIndex === shuffledAnswers.length - 1 ? "Finalizar" : "Siguiente"}
-                </Button>
+                  Siguiente
+                </button>
               </div>
             </div>
           </div>
@@ -1733,7 +1621,7 @@ export const GameRound = (): JSX.Element => {
                         onChange={(e) => setAnswer(e.target.value)}
                       />
                       <Button
-                        className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] text-white rounded-[10px] font-bold text-base"
+                        className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
                         onClick={handleSubmitAnswer}
                         disabled={!answer.trim()}
                       >
@@ -1842,9 +1730,24 @@ export const GameRound = (): JSX.Element => {
         </>
       )}
 
-      {!isModerator && showInsult && (
-        console.log('🎭 Intentando renderizar popup...'),
-        <InsultPopup />
+      {!isModerator && showInsult && <InsultPopup />}
+
+      {isModerator && allPlayersVoted && (
+        <div className="fixed bottom-0 left-0 right-0">
+          <div className="bg-white w-full px-6 pt-5 pb-8">
+            <div className="max-w-[327px] mx-auto">
+              <p className="text-[#131309] text-xl text-center mb-4">
+                ¡Ya han votado todos los jugadores!
+              </p>
+              <Button
+                className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
+                onClick={handleRevealResults}
+              >
+                Revelar resultados
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

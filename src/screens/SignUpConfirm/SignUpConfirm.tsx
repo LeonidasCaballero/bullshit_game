@@ -23,7 +23,7 @@ export const SignUpConfirm = () => {
           </p>
 
           <Button
-            className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+            className="w-full h-12 bg-[#804000] hover:bg-[#603000] rounded-[10px] font-bold text-base"
             onClick={() => navigate("/")}
           >
             Volver al inicio

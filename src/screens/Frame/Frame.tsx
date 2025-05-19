@@ -3,12 +3,13 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
+import { useCreateGame } from "../../hooks/useGame";
 
 export const Frame = (): JSX.Element => {
   const navigate = useNavigate();
   const [gameName, setGameName] = useState("");
   const [error, setError] = useState("");
+  const { createGame, loading: creating } = useCreateGame();
 
   const gameData = {
     title: "BULLSHIT",
@@ -26,16 +27,8 @@ export const Frame = (): JSX.Element => {
     }
 
     try {
-      const { data: game, error: gameError } = await supabase
-        .from('games')
-        .insert([{ name: gameName }])
-        .select()
-        .single();
-
-      if (gameError) throw gameError;
-      
+      const game = await createGame(gameName.trim());
       navigate(`/share/${game.id}`, { state: { gameName } });
-
     } catch (err) {
       console.error('Error creating game:', err);
       setError("Error al crear la partida. Por favor, inténtalo de nuevo.");
@@ -76,6 +69,7 @@ export const Frame = (): JSX.Element => {
             <Button
               className="w-full h-12 bg-[#804000] hover:bg-[#603000] rounded-[10px] font-bold text-base"
               onClick={handleCreateGame}
+              disabled={creating}
             >
               Siguiente
             </Button>

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
-import type { Game } from "../../lib/types";
+import { useGame } from "../../hooks/useGame";
+import { useJoinGame } from "../../hooks/usePlayer";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 
@@ -11,26 +11,11 @@ export const JoinGame = (): JSX.Element => {
   const { gameId } = useParams();
   const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
-  const [game, setGame] = useState<Game | null>(null);
+  const { game, loading: loadingGame } = useGame(gameId);
+  const { joinGame, loading: joining } = useJoinGame();
   
   const isCreator = location.state?.isCreator;
   const gameName = location.state?.gameName;
-
-  useEffect(() => {
-    const fetchGame = async () => {
-      const { data } = await supabase
-        .from('games')
-        .select('*')
-        .eq('id', gameId)
-        .single();
-      
-      if (data) {
-        setGame(data);
-      }
-    };
-
-    fetchGame();
-  }, [gameId]);
 
   const handleSubmit = async () => {
     if (!playerName.trim()) {
@@ -39,17 +24,7 @@ export const JoinGame = (): JSX.Element => {
     }
     
     try {
-      const { error: playerError } = await supabase
-        .from('players')
-        .insert([
-          { 
-            game_id: gameId, 
-            name: playerName.trim()
-          }
-        ]);
-
-      if (playerError) throw playerError;
-      
+      await joinGame(gameId, playerName);
       navigate(`/game/${gameId}/lobby`, { state: { playerName: playerName.trim() } });
     } catch (err) {
       console.error('Error joining game:', err);
@@ -57,7 +32,7 @@ export const JoinGame = (): JSX.Element => {
     }
   };
 
-  if (!game) {
+  if (loadingGame || !game) {
     return (
       <div className="bg-[#e7e7e6] flex justify-center w-full min-h-screen">
         <div className="w-full max-w-[375px] h-[812px] flex items-center justify-center">
@@ -108,9 +83,9 @@ export const JoinGame = (): JSX.Element => {
                 </div>
 
                 <Button
-                  className="w-full h-12 bg-[#CB1517] hover:bg-[#B31315] rounded-[10px] font-bold text-base"
+                  className="w-full h-12 bg-[#804000] hover:bg-[#603000] rounded-[10px] font-bold text-base"
                   onClick={handleSubmit}
-                  disabled={!playerName}
+                  disabled={!playerName || joining}
                 >
                   {isCreator ? 'Continuar' : 'Unirse'}
                 </Button>

@@ -232,9 +232,9 @@ export const GameLobby = (): JSX.Element => {
 
   const handleStartGame = async () => {
     if (!gameId || players.length < 2 || isStartingGame) return;
-    
+
     setIsStartingGame(true);
-    
+
     try {
       console.log('🎮 Iniciando juego...');
       
@@ -379,16 +379,16 @@ export const GameLobby = (): JSX.Element => {
 
       if (roundsData && roundsData.length > 0) {
         await supabase
-          .from('games')
-          .update({ 
-            started: true,
+        .from('games')
+        .update({ 
+          started: true,
             current_round_id: roundsData[0].id 
-          })
-          .eq('id', gameId);
+        })
+        .eq('id', gameId);
       }
 
       console.log('✅ Juego iniciado correctamente');
-
+      
     } catch (err) {
       console.error('Error starting game:', err);
       setError('Error al iniciar el juego');
@@ -503,9 +503,9 @@ export const GameLobby = (): JSX.Element => {
           }`}
         >
           {game?.name?.toUpperCase()}
-        </h2>
-      </div>
-      
+            </h2>
+          </div>
+
       <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
         <div className="flex items-center justify-between mb-6">
           <p className="text-[#131309] text-xl">
@@ -517,24 +517,24 @@ export const GameLobby = (): JSX.Element => {
         </div>
 
         <div className="space-y-3">
-          {players.map((player) => (
-            <div
-              key={player.id}
-              className="flex items-center gap-3 p-3 bg-[#E7E7E6] rounded-[10px]"
-            >
+            {players.map((player) => (
+              <div
+                key={player.id}
+                className="flex items-center gap-3 p-3 bg-[#E7E7E6] rounded-[10px]"
+              >
               <img 
                 src={getAvatarUrl(player.name)} 
                 alt="Avatar"
                 className="w-12 h-12 rounded-full object-cover bg-gray-100"
               />
               <span className="flex-1 text-[#131309] text-lg">
-                {player.name}
-                {player.id === currentPlayerId && " (Tú)"}
-              </span>
-            </div>
-          ))}
+                  {player.name}
+                  {player.id === currentPlayerId && " (Tú)"}
+                </span>
+              </div>
+            ))}
         </div>
-      </div>
+          </div>
 
       {/* Panel fijo en la parte inferior solo para el primer jugador */}
       {isFirstPlayer && (
@@ -543,15 +543,15 @@ export const GameLobby = (): JSX.Element => {
             <p className="text-[#131309] text-center">
               Eres el primero en llegar. Comienza la partida cuando estéis todos aquí.
             </p>
-            <Button
+          <Button
               className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
-              onClick={handleStartGame}
+            onClick={handleStartGame}
               disabled={isStartingGame}
-            >
+          >
               {isStartingGame ? "Iniciando..." : "Comenzar partida"}
-            </Button>
-          </div>
+          </Button>
         </div>
+      </div>
       )}
 
       {/* Panel fijo en la parte inferior para jugadores no primeros */}
