@@ -11,7 +11,7 @@ CREATE POLICY "Players can insert their own votes"
   FOR INSERT
   TO public
   WITH CHECK (
-    auth.uid()::text = player_id OR
+    auth.uid() = player_id OR
     EXISTS (
       SELECT 1 FROM players
       WHERE players.id = player_id
@@ -26,7 +26,7 @@ CREATE POLICY "Players can update their own votes"
   FOR UPDATE
   TO public
   USING (
-    auth.uid()::text = player_id OR
+    auth.uid() = player_id OR
     EXISTS (
       SELECT 1 FROM players
       WHERE players.id = player_id
@@ -43,7 +43,7 @@ CREATE POLICY "Players can read all votes for their games"
   USING (
     EXISTS (
       SELECT 1 FROM players
-      WHERE players.id = auth.uid()::text
+      WHERE players.id = auth.uid()
       AND players.game_id IN (
         SELECT game_id FROM rounds WHERE id = round_id
       )

@@ -11,6 +11,7 @@ export const Signup = (): JSX.Element => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +19,7 @@ export const Signup = (): JSX.Element => {
     setError(null);
     setLoading(true);
     try {
-      await signUp(email.trim(), password, username.trim());
+      await signUp(email.trim(), password, username.trim(), invitationCode.trim());
       alert('Registro correcto. Revisa tu email para confirmar la cuenta antes de iniciar sesión.');
       navigate('/login', { replace: true });
     } catch (err: any) {
@@ -42,6 +43,13 @@ export const Signup = (): JSX.Element => {
             className="h-12"
           />
           <Input
+            type="text"
+            placeholder="Código de invitación"
+            value={invitationCode}
+            onChange={(e) => setInvitationCode(e.target.value)}
+            className="h-12"
+          />
+          <Input
             type="email"
             placeholder="Email"
             value={email}
@@ -59,7 +67,7 @@ export const Signup = (): JSX.Element => {
           <Button
             className="w-full h-12 bg-[#804000] hover:bg-[#603000] rounded-[10px] font-bold text-base"
             onClick={handleSubmit}
-            disabled={loading || !username.trim()}
+            disabled={loading || !username.trim() || !invitationCode.trim()}
           >
             Registrarse
           </Button>
