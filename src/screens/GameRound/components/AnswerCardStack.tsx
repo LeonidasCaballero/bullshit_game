@@ -1,16 +1,5 @@
 import React from "react";
-
-interface AnswerOption {
-  content: string;
-  isCorrectAnswer?: boolean;
-  playerId?: string;
-  playerName?: string;
-}
-
-interface ExitingCard {
-  index: number;
-  content: string;
-}
+import type { AnswerOption, ExitingCard } from "../../../lib/types"; // Adjusted path
 
 interface AnswerCardStackProps {
   shuffledAnswers: AnswerOption[];
