@@ -63,3 +63,29 @@ export interface Vote {
   player_id: string;
   selected_answer: string;
 }
+
+export interface AnswerOption {
+  content: string;
+  isCorrectAnswer?: boolean;
+  playerId?: string;
+  playerName?: string;
+}
+
+export interface ExitingCard {
+  index: number;
+  content: string;
+}
+
+export interface PlayerScoreData {
+  playerId: string;
+  points: number;
+  details: string[];
+  playerAnswer: string | null;
+  // Add other fields from player object needed for display if not flattening
+  name: string;
+  avatar_color: string;
+  isModerator: boolean;
+  isCurrentPlayer: boolean;
+  voteIsCorrect: boolean | null; // null if didn't vote
+  votedAnswer: string | null; // null if didn't vote
+}
