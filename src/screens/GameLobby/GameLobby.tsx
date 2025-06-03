@@ -3,25 +3,11 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { ArrowLeft, Share2 } from "lucide-react";
-import type { Player, Game } from "../../lib/types";
+import type { Player, Game, Category as GameCategory, Question as GameQuestion, Round as GameRound } from "../../lib/types";
 
 // Usar un servicio de avatares generados
 const getAvatarUrl = (seed: string) => 
   `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
-
-// Asegurarnos de que rounds tenga el tipo correcto
-interface Round {
-  id: string;
-  game_id: string;
-  number: number;
-  moderator_id: string;
-  category: string;
-  active: boolean;
-  question_id: string;
-  voting_phase: boolean;
-  reading_phase: boolean;
-  results_phase: boolean;
-}
 
 export const GameLobby = (): JSX.Element => {
   console.log("GameLobby renderizado");
@@ -42,52 +28,83 @@ export const GameLobby = (): JSX.Element => {
 
   const ensureQuestionsExist = async () => {
     try {
-      // Verificar si ya existen preguntas
-      const { data: existingQuestions, error } = await supabase
+      const { data: existingQuestions, error: qError } = await supabase
         .from('questions')
-        .select('category')
+        .select('id')
         .limit(1);
-      
-      if (error) throw error;
-      
-      // Si ya hay preguntas, no hacer nada
+
+      if (qError) throw qError;
+
       if (existingQuestions && existingQuestions.length > 0) {
         console.log('✅ Preguntas existentes en la base de datos');
         return;
       }
-      
+
       console.log('⚠️ No se encontraron preguntas, creando preguntas predeterminadas...');
+
+      // 1. Definir categorías base y obtener/crear sus IDs
+      const baseCategoryNames = ['pelicula', 'sigla', 'personaje'];
+      let categoriesData: GameCategory[] = [];
+
+      const { data: existingCategories, error: catError } = await supabase
+        .from('categories')
+        .select('id, name')
+        .in('name', baseCategoryNames);
+
+      if (catError) throw catError;
+      categoriesData = existingCategories || [];
+
+      const existingNames = categoriesData.map(c => c.name);
+      const missingNames = baseCategoryNames.filter(name => !existingNames.includes(name));
+
+      if (missingNames.length > 0) {
+        const { data: newCategories, error: insertCatError } = await supabase
+          .from('categories')
+          .insert(missingNames.map(name => ({ name })))
+          .select('id, name');
+        if (insertCatError) throw insertCatError;
+        if (newCategories) {
+          categoriesData = [...categoriesData, ...newCategories];
+        }
+      }
       
-      // Preguntas por defecto para cada categoría
-      const defaultQuestions = [
-        // Películas
-        { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'Titanic', correct_answer: 'James Cameron' },
-        { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'El Padrino', correct_answer: 'Francis Ford Coppola' },
-        { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'Matrix', correct_answer: 'Hermanas Wachowski' },
-        { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'Pulp Fiction', correct_answer: 'Quentin Tarantino' },
-        { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'El Rey León', correct_answer: 'Disney' },
+      const categoryMap = categoriesData.reduce((acc, cat) => {
+        acc[cat.name] = cat.id;
+        return acc;
+      }, {} as Record<string, string>);
+
+      if (!categoryMap['pelicula'] || !categoryMap['sigla'] || !categoryMap['personaje']) {
+        console.error('Error: No se pudieron obtener IDs para todas las categorías base', categoryMap);
+        throw new Error('Faltan IDs de categorías base después de la inserción/obtención.');
+      }
+
+      // 2. Preguntas por defecto usando category_id
+      const defaultQuestionsData = [
+        { category_id: categoryMap['pelicula'], type: 1, text: '¿Qué película es esta?', content: 'Titanic', correct_answer: 'James Cameron' },
+        { category_id: categoryMap['pelicula'], type: 1, text: '¿Qué película es esta?', content: 'El Padrino', correct_answer: 'Francis Ford Coppola' },
+        { category_id: categoryMap['pelicula'], type: 1, text: '¿Qué película es esta?', content: 'Matrix', correct_answer: 'Hermanas Wachowski' },
+        { category_id: categoryMap['pelicula'], type: 1, text: '¿Qué película es esta?', content: 'Pulp Fiction', correct_answer: 'Quentin Tarantino' },
+        { category_id: categoryMap['pelicula'], type: 1, text: '¿Qué película es esta?', content: 'El Rey León', correct_answer: 'Disney' },
         
-        // Siglas
-        { category: 'sigla', type: 2, text: '¿Qué significan estas siglas?', content: 'ONU', correct_answer: 'Organización de las Naciones Unidas' },
-        { category: 'sigla', type: 2, text: '¿Qué significan estas siglas?', content: 'NASA', correct_answer: 'National Aeronautics and Space Administration' },
-        { category: 'sigla', type: 2, text: '¿Qué significan estas siglas?', content: 'FBI', correct_answer: 'Federal Bureau of Investigation' },
+        { category_id: categoryMap['sigla'], type: 2, text: '¿Qué significan estas siglas?', content: 'ONU', correct_answer: 'Organización de las Naciones Unidas' },
+        { category_id: categoryMap['sigla'], type: 2, text: '¿Qué significan estas siglas?', content: 'NASA', correct_answer: 'National Aeronautics and Space Administration' },
+        { category_id: categoryMap['sigla'], type: 2, text: '¿Qué significan estas siglas?', content: 'FBI', correct_answer: 'Federal Bureau of Investigation' },
         
-        // Personajes
-        { category: 'personaje', type: 3, text: '¿Quién es este personaje?', content: 'Darth Vader', correct_answer: 'Star Wars' },
-        { category: 'personaje', type: 3, text: '¿Quién es este personaje?', content: 'Harry Potter', correct_answer: 'Saga Harry Potter' },
-        { category: 'personaje', type: 3, text: '¿Quién es este personaje?', content: 'Spider-Man', correct_answer: 'Marvel Comics' }
+        { category_id: categoryMap['personaje'], type: 3, text: '¿Quién es este personaje?', content: 'Darth Vader', correct_answer: 'Star Wars' },
+        { category_id: categoryMap['personaje'], type: 3, text: '¿Quién es este personaje?', content: 'Harry Potter', correct_answer: 'Saga Harry Potter' },
+        { category_id: categoryMap['personaje'], type: 3, text: '¿Quién es este personaje?', content: 'Spider-Man', correct_answer: 'Marvel Comics' }
       ];
       
-      // Insertar las preguntas
       const { error: insertError } = await supabase
         .from('questions')
-        .insert(defaultQuestions);
+        .insert(defaultQuestionsData);
       
       if (insertError) throw insertError;
       
-      console.log('✅ Preguntas predeterminadas creadas exitosamente');
+      console.log('✅ Preguntas predeterminadas creadas exitosamente con category_id');
     } catch (err) {
       console.error('❌ Error al verificar/crear preguntas:', err);
+      // Podrías querer establecer un estado de error aquí para el usuario
     }
   };
 
@@ -115,22 +132,29 @@ export const GameLobby = (): JSX.Element => {
               
               // Si el juego ha comenzado, obtener la ronda activa
               if (gameData.started) {
+                // MODIFICADO: Seleccionar category_id y el nombre de la categoría
                 const { data: activeRound } = await supabase
                   .from('rounds')
-                  .select('*')
+                  .select('*, categories ( name )') // Obtener el nombre de la categoría
                   .eq('game_id', gameId)
                   .eq('active', true)
                   .single();
 
                 if (activeRound) {
-                  // Navegar a la pantalla introductoria con toda la información necesaria
+                  const roundWithCategoryName = {
+                    ...activeRound,
+                    // @ts-ignore Supabase a veces anida la relación así
+                    category_name: activeRound.categories?.name || 'Desconocida' 
+                  };
+                  // MODIFICADO: Pasar category_id y category_name
                   navigate(`/game/${gameId}/round/intro`, {
                     state: { 
                       playerName,
-                      roundNumber: activeRound.number,
-                      roundId: activeRound.id,
-                      moderatorId: activeRound.moderator_id,
-                      category: activeRound.category
+                      roundNumber: roundWithCategoryName.number,
+                      roundId: roundWithCategoryName.id,
+                      moderatorId: roundWithCategoryName.moderator_id,
+                      category_id: roundWithCategoryName.category_id, // Pasar ID
+                      category_name: roundWithCategoryName.category_name // Pasar nombre
                     }
                   });
                 }
@@ -173,21 +197,29 @@ export const GameLobby = (): JSX.Element => {
 
         // Si el juego ya está iniciado, obtener la ronda activa
         if (gameData.started) {
+          // MODIFICADO: Seleccionar category_id y el nombre de la categoría
           const { data: activeRound } = await supabase
             .from('rounds')
-            .select('*')
+            .select('*, categories ( name )') // Obtener nombre de categoría
             .eq('game_id', gameId)
             .eq('active', true)
             .single();
 
           if (activeRound) {
+            const roundWithCategoryName = {
+              ...activeRound,
+              // @ts-ignore
+              category_name: activeRound.categories?.name || 'Desconocida'
+            };
+            // MODIFICADO: Pasar category_id y category_name
             navigate(`/game/${gameId}/round/intro`, {
               state: { 
                 playerName,
-                roundNumber: activeRound.number,
-                roundId: activeRound.id,
-                moderatorId: activeRound.moderator_id,
-                category: activeRound.category
+                roundNumber: roundWithCategoryName.number,
+                roundId: roundWithCategoryName.id,
+                moderatorId: roundWithCategoryName.moderator_id,
+                category_id: roundWithCategoryName.category_id,
+                category_name: roundWithCategoryName.category_name
               }
             });
           }
@@ -238,125 +270,75 @@ export const GameLobby = (): JSX.Element => {
     try {
       console.log('🎮 Iniciando juego...');
       
-      // DIAGNÓSTICO: Primero obtener TODAS las preguntas sin filtrar
-      const { data: allQuestions, error: allQuestionsError } = await supabase
+      // MODIFICADO: obtener questions con category_id y el nombre de la categoría
+      const { data: allQuestionsData, error: allQuestionsError } = await supabase
         .from('questions')
-        .select('id, category');
+        .select('id, category_id, categories ( name )'); // Incluir el nombre de la categoría
       
       if (allQuestionsError) throw allQuestionsError;
+
+      // Mapear para tener una estructura más plana si es necesario, o usarla directamente
+      const allQuestions = allQuestionsData?.map(q => ({
+        ...q,
+        // @ts-ignore
+        category_name: q.categories?.name 
+      })) || [];
       
-      console.log('🔍 Todas las preguntas:', allQuestions);
+      console.log('🔍 Todas las preguntas (con category_id y name):', allQuestions);
       
-      // Si no hay preguntas en absoluto, crearlas manualmente
       if (!allQuestions || allQuestions.length === 0) {
-        console.log('⚠️ No hay preguntas en la base de datos, insertando manualmente...');
-        
-        // Preguntas por defecto para cada categoría
-        const defaultQuestions = [
-          // Películas
-          { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'Titanic', correct_answer: 'James Cameron' },
-          { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'El Padrino', correct_answer: 'Francis Ford Coppola' },
-          { category: 'pelicula', type: 1, text: '¿Qué película es esta?', content: 'Matrix', correct_answer: 'Hermanas Wachowski' },
-          
-          // Siglas
-          { category: 'sigla', type: 2, text: '¿Qué significan estas siglas?', content: 'ONU', correct_answer: 'Organización de las Naciones Unidas' },
-          { category: 'sigla', type: 2, text: '¿Qué significan estas siglas?', content: 'NASA', correct_answer: 'National Aeronautics and Space Administration' },
-          
-          // Personajes
-          { category: 'personaje', type: 3, text: '¿Quién es este personaje?', content: 'Darth Vader', correct_answer: 'Star Wars' },
-          { category: 'personaje', type: 3, text: '¿Quién es este personaje?', content: 'Harry Potter', correct_answer: 'Saga Harry Potter' },
-        ];
-        
-        // Insertar las preguntas
-        const { data: insertedQuestions, error: insertError } = await supabase
-          .from('questions')
-          .insert(defaultQuestions)
-          .select();
-        
-        if (insertError) throw insertError;
-        
-        // Usar estas preguntas recién insertadas
-        const movieQuestions = insertedQuestions.filter(q => q.category === 'pelicula');
-        const siglaQuestions = insertedQuestions.filter(q => q.category === 'sigla');
-        const characterQuestions = insertedQuestions.filter(q => q.category === 'personaje');
-        
-        console.log('✅ Preguntas insertadas manualmente:', insertedQuestions.length);
-        
-        // Crear el pool con estas preguntas
-        const questionsByCategory = {
-          pelicula: movieQuestions || [],
-          sigla: siglaQuestions || [],
-          personaje: characterQuestions || []
-        };
-        
-        console.log('📋 Preguntas disponibles después de inserción manual:', {
-          pelicula: questionsByCategory.pelicula.length,
-          sigla: questionsByCategory.sigla.length,
-          personaje: questionsByCategory.personaje.length
-        });
-        
-        // Continuar con la lógica existente usando estas preguntas
-        
-        // ...resto del código...
-        
+        // La lógica de ensureQuestionsExist debería haber prevenido esto,
+        // pero si llegamos aquí, es un error grave.
+        console.error('Critical Error: No questions found after ensureQuestionsExist was supposed to run.');
+        setError('Error crítico: No se encontraron preguntas. Intenta recargar.');
+        setIsStartingGame(false);
         return;
       }
       
-      // Si hay preguntas pero las categorías están mal, intentar adaptarse
-      // Obtener las categorías que realmente existen en la base de datos
-      const uniqueCategories = [...new Set(allQuestions.map(q => q.category))];
-      console.log('🏷️ Categorías existentes:', uniqueCategories);
-      
-      // Agrupar las preguntas por las categorías que existan realmente
-      const questionsByCategory: Record<string, any[]> = {};
-      uniqueCategories.forEach(category => {
-        questionsByCategory[category] = allQuestions.filter(q => q.category === category);
+      // Agrupar preguntas por category_id
+      const questionsByCategoryId: Record<string, GameQuestion[]> = {};
+      allQuestions.forEach((question : any) => { // any por la estructura anidada temporalmente
+        if (!questionsByCategoryId[question.category_id]) {
+          questionsByCategoryId[question.category_id] = [];
+        }
+        questionsByCategoryId[question.category_id].push(question as GameQuestion);
       });
       
-      console.log('📋 Preguntas disponibles por categoría real:', 
+      console.log('📋 Preguntas disponibles por category_id:', 
         Object.fromEntries(
-          Object.entries(questionsByCategory).map(([k, v]) => [k, v.length])
+          Object.entries(questionsByCategoryId).map(([k, v]) => [k, v.length])
         )
       );
       
-      // Verificar si hay suficientes preguntas
-      const totalQuestions = allQuestions.length;
-      
-      if (totalQuestions === 0) {
-        throw new Error('No hay preguntas disponibles en la base de datos');
+      const uniqueCategoryIds = Object.keys(questionsByCategoryId);
+      if (uniqueCategoryIds.length === 0) {
+        throw new Error('No hay preguntas agrupadas por categorías disponibles.');
       }
       
-      // 2. Definir categorías para cada ronda basándose en las categorías reales que existan
-      const roundCategories = [...uniqueCategories];
-      
-      // Si no hay suficientes categorías, repetir las existentes
-      while (roundCategories.length < 4) {
-        roundCategories.push(uniqueCategories[0]);
+      const roundCategoryIds = [...uniqueCategoryIds];
+      while (roundCategoryIds.length < 4 && uniqueCategoryIds.length > 0) {
+        roundCategoryIds.push(uniqueCategoryIds[0]); // Repetir si no hay suficientes
       }
       
-      // 3. Crear las 4 rondas con preguntas aleatorias
-      const rounds = [];
+      const roundsToInsert = [];
       for (let i = 0; i < 4; i++) {
-        const category = roundCategories[i % roundCategories.length];
-        const questions = questionsByCategory[category];
+        const selectedCategoryId = roundCategoryIds[i % roundCategoryIds.length];
+        const questionsInCat = questionsByCategoryId[selectedCategoryId];
         
-        if (!questions || questions.length === 0) {
-          console.warn(`⚠️ No hay preguntas para la categoría ${category}, saltando...`);
+        if (!questionsInCat || questionsInCat.length === 0) {
+          console.warn(`⚠️ No hay preguntas para category_id ${selectedCategoryId}, saltando...`);
           continue;
         }
         
-        // Seleccionar una pregunta aleatoria
-        const randomIndex = Math.floor(Math.random() * questions.length);
-        const selectedQuestion = questions[randomIndex];
-        
-        // Asignar un moderador (rotando entre los jugadores)
+        const randomIndex = Math.floor(Math.random() * questionsInCat.length);
+        const selectedQuestion = questionsInCat[randomIndex];
         const moderator = players[i % players.length];
         
-        rounds.push({
+        roundsToInsert.push({
           game_id: gameId,
           number: i + 1,
           moderator_id: moderator.id,
-          category: category,
+          category_id: selectedQuestion.category_id, // Usar category_id
           active: i === 0,
           question_id: selectedQuestion.id,
           voting_phase: false,
@@ -365,17 +347,20 @@ export const GameLobby = (): JSX.Element => {
         });
       }
       
-      console.log('🔄 Rondas configuradas:', rounds.length);
+      console.log('🔄 Rondas configuradas para insertar:', roundsToInsert.length);
       
-      if (rounds.length === 0) {
-        throw new Error('No se pudieron crear rondas con las preguntas disponibles');
+      if (roundsToInsert.length === 0) {
+        throw new Error('No se pudieron crear rondas con las preguntas disponibles y category_id.');
       }
 
-      // 4. Insertar todas las rondas
-      const { data: roundsData } = await supabase
+      // Insertar todas las rondas
+      // MODIFICADO: Se usa GameRound de los tipos importados
+      const { data: roundsData, error: insertRoundsError } = await supabase
         .from('rounds')
-        .insert(rounds)
-        .select() as { data: Round[] };
+        .insert(roundsToInsert)
+        .select() as { data: GameRound[] | null, error: any }; // Especificar tipo GameRound
+
+      if (insertRoundsError) throw insertRoundsError;
 
       if (roundsData && roundsData.length > 0) {
         await supabase

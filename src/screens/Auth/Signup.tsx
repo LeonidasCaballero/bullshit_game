@@ -32,7 +32,7 @@ export const Signup = (): JSX.Element => {
   return (
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center justify-center px-4">
       <h1 className="[font-family:'Londrina_Solid'] text-[56px] text-[#131309] mb-8">BULLSHIT</h1>
-      <Card className="w-full max-w-[327px]">
+      <Card className="w-full max-w-[327px] bg-white">
         <CardContent className="p-6 space-y-4">
           <h2 className="text-[#131309] text-xl font-bold">Crear cuenta</h2>
           <Input

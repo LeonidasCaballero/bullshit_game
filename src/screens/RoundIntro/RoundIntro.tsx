@@ -1,7 +1,7 @@
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import type { Player, Round } from "../../lib/types";
+import type { Player } from "../../lib/types";
 
 export const RoundIntro = () => {
   const location = useLocation();
@@ -9,42 +9,46 @@ export const RoundIntro = () => {
   const { gameId } = useParams();
   const [countdown, setCountdown] = useState<number>(10);
   const [moderator, setModerator] = useState<Player | null>(null);
-  const [round, setRound] = useState<Round | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const roundInfoFromState = location.state as {
+    playerName: string;
+    roundNumber: number;
+    roundId: string;
+    moderatorId: string;
+    category_id: string;
+    category_name: string;
+  };
+
   useEffect(() => {
-    const loadRoundInfo = async () => {
+    if (!roundInfoFromState?.moderatorId) {
+      console.error("Error: Falta información de la ronda en el estado de navegación.");
+      navigate(`/game/${gameId}/lobby`, { state: { playerName: location.state?.playerName } });
+      return;
+    }
+
+    const loadModerator = async () => {
       try {
-        // Obtener la ronda activa
-        const { data: activeRound } = await supabase
-          .from('rounds')
-          .select('*')
-          .eq('game_id', gameId)
-          .eq('active', true)
-          .single();
-
-        if (!activeRound) return;
-        setRound(activeRound);
-
-        // Obtener el moderador
-        const { data: moderatorData } = await supabase
+        setIsLoading(true);
+        const { data: moderatorData, error } = await supabase
           .from('players')
           .select('*')
-          .eq('id', activeRound.moderator_id)
+          .eq('id', roundInfoFromState.moderatorId)
           .single();
 
+        if (error) throw error;
         if (moderatorData) {
           setModerator(moderatorData);
         }
-
-        setIsLoading(false);
       } catch (err) {
-        console.error('Error loading round info:', err);
+        console.error('Error loading moderator in RoundIntro:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    loadRoundInfo();
-  }, [gameId]);
+    loadModerator();
+  }, [gameId, roundInfoFromState?.moderatorId, navigate, location.state?.playerName]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -55,20 +59,21 @@ export const RoundIntro = () => {
       return () => clearInterval(timer);
     }
 
-    if (countdown === 0 && round) {
+    if (countdown === 0 && roundInfoFromState?.roundId) {
       navigate(`/game/${gameId}/round`, {
         state: { 
-          playerName: location.state?.playerName,
-          roundNumber: round?.number,
-          roundId: round?.id,
-          moderatorId: round?.moderator_id,
-          category: round?.category
+          playerName: roundInfoFromState.playerName,
+          roundNumber: roundInfoFromState.roundNumber,
+          roundId: roundInfoFromState.roundId,
+          moderatorId: roundInfoFromState.moderatorId,
+          category_id: roundInfoFromState.category_id,
+          category_name: roundInfoFromState.category_name
         }
       });
     }
-  }, [countdown, gameId, navigate, location.state?.playerName, round]);
+  }, [countdown, gameId, navigate, roundInfoFromState]);
 
-  if (isLoading || !round || !moderator) {
+  if (isLoading || !roundInfoFromState?.roundId || !moderator) {
     return (
       <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center justify-center">
         <p className="text-[#131309] text-lg">Cargando...</p>
@@ -77,11 +82,11 @@ export const RoundIntro = () => {
   }
 
   const getCategoryEmoji = () => {
-    switch (round.category) {
+    switch (roundInfoFromState.category_name?.toLowerCase()) {
       case 'pelicula': return '🎬';
       case 'sigla': return 'ABC';
       case 'personaje': return '👤';
-      default: return '';
+      default: return '❓';
     }
   };
 
@@ -92,7 +97,7 @@ export const RoundIntro = () => {
       </h1>
       
       <p className="text-[#131309] text-xl mt-4">
-        RONDA {round.number}
+        RONDA {roundInfoFromState.roundNumber}
       </p>
 
       <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
@@ -110,7 +115,7 @@ export const RoundIntro = () => {
             <span className="text-4xl">{getCategoryEmoji()}</span>
           </div>
           <p className="text-[#131309] text-xl font-bold uppercase">
-            {round.category}
+            {roundInfoFromState.category_name || 'Categoría Desconocida'}
           </p>
         </div>
       </div>

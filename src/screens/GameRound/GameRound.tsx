@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase, subscribeToAnswers, subscribeToRound } from "../../lib/supabase";
 import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
+<<<<<<< HEAD
 import type { Round, Player, Question, Answer, Vote, PlayerScoreData, AnswerOption, ExitingCard } from "../../lib/types"; // Added PlayerScoreData, AnswerOption, ExitingCard
 import { CountdownView } from './components/phases/CountdownView';
 import { PlayerAnsweringView } from './components/phases/PlayerAnsweringView';
@@ -12,6 +13,10 @@ import { PlayerVotingView } from './components/phases/PlayerVotingView';
 import { ModeratorVotingWaitView } from './components/phases/ModeratorVotingWaitView';
 import { ResultsView } from './components/phases/ResultsView';
 import { fetchWithRetry } from '../../lib/fetchWithRetry';
+=======
+import { AnswerCardStack } from "./components/AnswerCardStack";
+import type { Round, Player, Question, Answer, Vote, Category } from "../../lib/types";
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
 
 type AnswerResponse = Pick<Answer, 'content' | 'player_id'> & {
   players: { name: string; avatar_color: string; }[];
@@ -43,6 +48,17 @@ export const GameRound = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const { gameId } = useParams();
+  
+  // MODIFICADO: Obtener category_id y category_name del estado de navegación
+  const roundInfoFromState = location.state as {
+    playerName: string;
+    roundNumber: number;
+    roundId: string;
+    moderatorId: string;
+    category_id: string; 
+    category_name: string; 
+  };
+
   const [round, setRound] = useState<Round | null>(null);
   const [moderator, setModerator] = useState<Player | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -238,6 +254,7 @@ export const GameRound = (): JSX.Element => {
 
   useEffect(() => {
     const setupGame = async () => {
+<<<<<<< HEAD
       if (!gameId || !location.state?.playerName || !location.state?.roundId) {
           setError("Faltan datos para iniciar el juego.");
           setIsLoading(false);
@@ -288,6 +305,144 @@ export const GameRound = (): JSX.Element => {
           if (updatedRound.results_phase) setResultsCountdown(20);
 
         });
+=======
+      // MODIFICADO: Usar roundId de roundInfoFromState
+      if (!gameId || !roundInfoFromState?.playerName || !roundInfoFromState?.roundId) return;
+
+      try {
+        console.log('🎮 Configurando juego inicial para ronda ID:', roundInfoFromState.roundId);
+        
+        const [playersData, roundDataFromDB] = await Promise.all([
+          fetchWithRetry<Player[]>(async () => 
+            supabase.from('players').select('*').eq('game_id', gameId)
+              .then(response => ({ data: response.data as Player[], error: response.error }))
+          ),
+          // MODIFICADO: Al fetchear la ronda, incluir el nombre de la categoría
+          fetchWithRetry<Round>(async () => 
+            supabase.from('rounds').select('*, categories(id, name)').eq('id', roundInfoFromState.roundId).single()
+              .then(response => ({ data: response.data as Round, error: response.error }))
+          )
+        ]);
+
+        if (!playersData || !roundDataFromDB) {
+          throw new Error('No se pudieron cargar los datos del juego o la ronda');
+        }
+
+        // Procesar la ronda para asegurar que category_name esté disponible
+        const processedRound = {
+          ...roundDataFromDB,
+          // @ts-ignore Supabase anida las relaciones
+          category_name: roundDataFromDB.categories?.name || roundInfoFromState.category_name || 'Desconocida',
+          // @ts-ignore
+          category_id: roundDataFromDB.category_id || roundInfoFromState.category_id
+        };
+        setRound(processedRound as Round);
+
+        const questionData = processedRound.question_id ? 
+          await fetchWithRetry<Question>(async () => 
+            supabase.from('questions')
+              .select('*')
+              .eq('id', processedRound.question_id)
+              .single()
+              .then(response => ({ data: response.data as Question, error: response.error }))
+          ) : null;
+
+        // 3. Obtener respuestas
+        const answersData = await fetchWithRetry<Answer[]>(async () => 
+          supabase.from('answers').select('*').eq('round_id', processedRound.id)
+            .then(response => ({ data: response.data as Answer[], error: response.error }))
+        );
+
+        if (!playersData || playersData.length === 0) {
+          throw new Error('No se encontraron jugadores');
+        }
+        setPlayers(playersData);
+
+        // 2. Establecer jugador actual
+        const currentPlayerData = playersData.find(p => p.name === roundInfoFromState.playerName);
+        if (!currentPlayerData) {
+          throw new Error('Jugador actual no encontrado');
+        }
+        setCurrentPlayer(currentPlayerData);
+
+        // 3. Obtener la ronda activa
+        if (!processedRound) {
+          throw new Error('No se encontró la ronda');
+        }
+        setIsModerator(processedRound.moderator_id === currentPlayerData.id);
+
+        // 4. Establecer moderador
+        const moderatorData = playersData.find(p => p.id === processedRound.moderator_id);
+        if (!moderatorData) {
+          throw new Error('Moderador no encontrado');
+        }
+        setModerator(moderatorData);
+
+        // 5. Obtener pregunta si existe
+          if (questionData) {
+            setQuestion(questionData);
+            setCountdown(0);
+        }
+
+        const initialAnswers = answersData || [];
+        setAnswers(initialAnswers);
+        setHasAnswered(initialAnswers.some(a => a.player_id === currentPlayerData.id));
+
+        if (answersChannelRef.current) {
+          answersChannelRef.current.unsubscribe();
+        }
+        answersChannelRef.current = subscribeToAnswers(processedRound.id, handleAnswersUpdate);
+
+        if (roundChannelRef.current) {
+          roundChannelRef.current.unsubscribe();
+        }
+        roundChannelRef.current = supabase
+          .channel(`round-${processedRound.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'rounds',
+              filter: `id=eq.${processedRound.id}`,
+            },
+            async (payload) => {
+              console.log('Received round update via subscription:', payload.new);
+              let updatedRound = payload.new as Round;
+
+              // Si falta category_name, intentar obtenerlo
+              if (updatedRound.category_id && !updatedRound.category_name) {
+                const { data: catData, error: catErr } = await supabase
+                  .from('categories')
+                  .select('name')
+                  .eq('id', updatedRound.category_id)
+                  .single();
+                if (!catErr && catData) {
+                  updatedRound.category_name = catData.name;
+                }
+              }
+              setRound(updatedRound);
+
+              // Si question_id cambió y no teníamos datos de la pregunta o es diferente
+              if (updatedRound.question_id && 
+                  (updatedRound.question_id !== question?.id || !question)) {
+                const newQuestionData = await fetchWithRetry<Question>(
+                  async () => await supabase
+                    .from('questions')
+                    .select('*')
+                    .eq('id', updatedRound.question_id)
+                    .single()
+                    .then(response => ({ data: response.data as Question, error: response.error }))
+                );
+
+                if (newQuestionData) {
+                  setQuestion(newQuestionData);
+                  setCountdown(0);
+                }
+              }
+            }
+          );
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
 
         setIsLoading(false);
       } catch (err) {
@@ -299,10 +454,26 @@ export const GameRound = (): JSX.Element => {
     };
     setupGame();
     return () => {
+<<<<<<< HEAD
       if (answersChannelRef.current) answersChannelRef.current.unsubscribe();
       if (roundChannelRef.current) roundChannelRef.current.unsubscribe();
     };
   }, [gameId, location.state?.playerName, location.state?.roundId, retryCount]); // Added location.state.roundId dependency
+=======
+      console.log('🧹 Limpieza final de suscripciones');
+      if (answersChannelRef.current) {
+        answersChannelRef.current.unsubscribe();
+        answersChannelRef.current = null;
+      }
+      if (roundChannelRef.current) {
+        // MODIFICADO: Lógica de desuscripción de Supabase
+        const promise = roundChannelRef.current.unsubscribe();
+        void promise.then(() => console.log('Desuscrito del canal de ronda'));
+        roundChannelRef.current = null;
+      }
+    };
+  }, [gameId, roundInfoFromState?.playerName, roundInfoFromState?.roundId, handleAnswersUpdate]);
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -327,21 +498,50 @@ export const GameRound = (): JSX.Element => {
 
   const handleStartReadingAnswers = async () => {
     if (!round) return;
+<<<<<<< HEAD
+=======
+    
+    // El objeto que se envía a 'round-update' debe ser consistente
+    // con lo que espera el receptor, incluyendo category_name si es posible.
+    const updatedRoundPayload = { 
+      ...round, 
+      reading_phase: true, 
+      // category_name podría ya estar en 'round', si no, se puede omitir o buscar
+    };
+
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
     try {
       const { error: updateError } = await supabase.from('rounds').update({ reading_phase: true }).eq('id', round.id);
       if (updateError) throw updateError;
+<<<<<<< HEAD
       supabase.channel(`round-updates-${round.id}`).send({ type: 'broadcast', event: 'round-update', payload: { round: { ...round, reading_phase: true } } });
       // setIsReadingAnswers(true); // Should be set by round update subscription
+=======
+      
+      // Enviar broadcast para notificar a todos los jugadores
+      supabase
+        .channel(`round-updates-${round.id}`)
+        .send({
+          type: 'broadcast',
+          event: 'round-update',
+          payload: { round: updatedRoundPayload } // Usar el payload consistente
+        })
+        .then(() => console.log('✅ Broadcast de fase de lectura enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
+
+      setIsReadingAnswers(true);
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
       prepareShuffledAnswers();
     } catch (err) { console.error('Error starting reading phase:', err); setError('Error al iniciar la fase de lectura'); }
   };
 
+  // MODIFICADO: Usar round.category_name para el icono
   const getCategoryIcon = () => {
-    switch (round?.category) {
+    switch (round?.category_name?.toLowerCase()) {
       case 'pelicula': return '🎬';
       case 'sigla': return 'ABC';
       case 'personaje': return '👤';
-      default: return '';
+      default: return '❓';
     }
   };
   
@@ -365,14 +565,54 @@ export const GameRound = (): JSX.Element => {
 
   const handleRevealResults = async () => {
     if (!round) return;
+<<<<<<< HEAD
+=======
+    
+    // Payload consistente para el broadcast
+    const updatedRoundPayload = {
+      ...round, 
+      results_phase: true,
+      voting_phase: false
+    };
+    
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
     try {
       const { error: updateError } = await supabase.from('rounds').update({ results_phase: true, voting_phase: false }).eq('id', round.id);
       if (updateError) throw updateError;
+<<<<<<< HEAD
       const updatedRoundData = { ...round, results_phase: true, voting_phase: false };
       supabase.channel(`round-updates-${round.id}`).send({ type: 'broadcast', event: 'round-update', payload: { round: updatedRoundData } });
       // setRound(updatedRoundData); // Should be set by round update subscription
       // setResultsCountdown(20); // Should be set by round update subscription
     } catch (err) { console.error('Error revealing results:', err); setError('Error al revelar resultados'); }
+=======
+      
+      // Actualizar el estado local
+      const updatedRound = {
+        ...round, 
+        results_phase: true,
+        voting_phase: false
+      };
+      
+      // Enviar broadcast para sincronizar todos los clientes
+      supabase
+        .channel(`round-updates-${round.id}`)
+        .send({
+          type: 'broadcast',
+          event: 'round-update',
+          payload: { round: updatedRoundPayload } // Usar el payload consistente
+        })
+        .then(() => console.log('✅ Broadcast de fase de resultados enviado'))
+        .catch(err => console.error('❌ Error enviando broadcast:', err));
+      
+      // Actualizar el estado local
+      setRound(updatedRound);
+      setResultsCountdown(20);
+    } catch (err) {
+      console.error('Error revealing results:', err);
+      setError('Error al revelar resultados');
+    }
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
   };
 
   useEffect(() => {
@@ -381,9 +621,25 @@ export const GameRound = (): JSX.Element => {
       return () => clearInterval(timer);
     }
     if (round?.results_phase && resultsCountdown === 0) {
+<<<<<<< HEAD
       navigate(`/game/${gameId}/scores`, { state: { playerName: currentPlayer?.name, roundNumber: round.number, roundId: round.id, moderatorId: round.moderator_id, usedQuestionIds: question?.id } });
     }
   }, [round?.results_phase, resultsCountdown, round?.id, gameId, navigate, currentPlayer?.name, round?.number, question?.id]);
+=======
+      navigate(`/game/${gameId}/scores`, { 
+        state: { 
+          playerName: currentPlayer?.name,
+          roundNumber: round.number,
+          roundId: round.id,
+          moderatorId: round.moderator_id,
+          // MODIFICADO: Pasar category_name si es necesario en la pantalla de scores
+          category_name: round.category_name, 
+          usedQuestionIds: question?.id 
+        } 
+      });
+    }
+  }, [round?.results_phase, resultsCountdown, round?.id, round?.number, round?.moderator_id, round?.category_name, gameId, navigate, currentPlayer?.name, question?.id]);
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
 
   useEffect(() => {
     if (!gameId || !round?.id) return;
@@ -417,9 +673,47 @@ export const GameRound = (): JSX.Element => {
       if(updatedRound.results_phase) setResultsCountdown(20); // Reset countdown on entering results phase
       if(updatedRound.voting_phase) setIsReadingAnswers(false); // Ensure reading is off if voting starts
 
+<<<<<<< HEAD
     }).subscribe();
     return () => { roundBroadcast.unsubscribe(); };
   }, [gameId, round?.id]); // Removed round from dependencies to avoid loop with setRound
+=======
+    console.log('🔄 Configurando canal de actualizaciones de ronda:', round.id);
+    
+    const roundBroadcast = supabase
+      .channel(`round-updates-${round.id}`)
+      .on('broadcast', { event: 'round-update' }, (payload) => {
+        console.log('📢 Actualización de ronda recibida:', payload);
+        const updatedRound = payload.payload.round as Round;
+        
+        // Asegurar que category_name esté presente si es posible
+        if (updatedRound.category_id && !updatedRound.category_name) {
+          // Esto es un fallback, idealmente el broadcast ya lo trae.
+          // Podrías tener un mapa local de category_id -> name o fetchearlo.
+          // Por ahora, si no viene, quedará como undefined o el valor anterior.
+          console.warn("Actualización de ronda recibida sin category_name en el payload.");
+        }
+        
+        setRound(updatedRound);
+        
+        // Usar condiciones mutuamente excluyentes
+        if (updatedRound.reading_phase) {
+          console.log('🎭 Fase de lectura activada');
+          setIsReadingAnswers(true);
+        }
+        else if (updatedRound.voting_phase) {
+          console.log('🗳️ Fase de votación activada');
+          setIsReadingAnswers(false);
+        }
+        else if (updatedRound.results_phase) {
+          console.log('�� Fase de resultados activada');
+          setResultsCountdown(20);
+        }
+      })
+      .subscribe((status) => {
+        console.log(`📡 Estado de suscripción a actualizaciones de ronda: ${status}`);
+      });
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
 
   const calculateScores = useCallback(() => {
     if (!question || !votes || !answers || !players) return {}; // Ensure players is also checked
@@ -616,8 +910,254 @@ if (round.reading_phase) {
 
 if (round.scoring_phase) { // Placeholder for actual scoring view
   return (
+<<<<<<< HEAD
     <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center justify-center">
       <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309]">Puntuaciones</h1>
+=======
+    <div className="bg-[#E7E7E6] flex flex-col min-h-screen items-center">
+      <h1 className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] mt-6">
+        BULLSHIT
+      </h1>
+      
+
+      {isModerator && isReadingAnswers && shuffledAnswers.length > 0 ? (
+        <>
+          <div className="w-full max-w-[375px] mt-8 mb-28">
+            <div className="text-center mb-6">
+              <p className="text-[#131309] text-lg font-bold">
+                {question?.text.replace(/\.$/, '')} <span className="italic">{question?.content}</span>?
+                </p>
+              </div>
+
+            <div className="bg-[#131309] rounded-[20px] p-6 px-8 py-4 mb-6">
+              <p className="text-white text-center">
+                Lee las respuestas al resto de jugadores.
+                Se han ordenado aleatoriamente junto a la respuesta real.
+              </p>
+          </div>
+
+            <AnswerCardStack
+              shuffledAnswers={shuffledAnswers}
+              exitingCards={exitingCards}
+              slideDirection={slideDirection as 'left' | 'right'}
+              currentAnswerIndex={currentAnswerIndex}
+            />
+
+          </div> {/* cierra contenedor cards moderador fuera de reading_phase */}
+
+          <div className="fixed bottom-0 left-0 right-0">
+            <div className="bg-white w-full px-6 pt-5 pb-8">
+              <div className="max-w-[327px] mx-auto flex gap-3">
+                <button
+                  onClick={handlePrevAnswer}
+                  className="w-12 h-12 bg-[#E7E7E6] hover:bg-[#d1d1d0] rounded-[10px] flex items-center justify-center"
+                  disabled={currentAnswerIndex === 0}
+                >
+                  <ChevronLeft className="w-6 h-6 text-[#131309]" />
+                </button>
+                
+                <button
+                  onClick={handleNextAnswer}
+                  className="flex-1 h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {countdown > 0 ? (
+            <>
+              <div className="w-full max-w-[327px] aspect-[1.6] bg-[#131309] rounded-[20px] mt-8 flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-[200px] font-bold text-[#131309] opacity-10 select-none">
+                    BULLSHIT
+                  </div>
+                </div>
+                
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="bg-[#9FFF00] w-20 h-20 rounded-[10px] flex items-center justify-center mb-4">
+                    <span className="text-4xl">{getCategoryIcon()}</span>
+                  </div>
+                  <p className="text-[#9FFF00] text-2xl font-bold uppercase">
+                    {round.category_name}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-[#131309] text-xl mt-8">
+                MODERADOR
+              </p>
+
+              <div className="mt-4 flex flex-col items-center">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold"
+                  style={{ backgroundColor: moderator.avatar_color }}
+                >
+                  {moderator.name.charAt(0).toUpperCase()}
+                </div>
+                <p className="text-[#131309] text-xl mt-2">{moderator.name}</p>
+              </div>
+
+              <div className="fixed bottom-0 left-0 right-0">
+                <div className="bg-white w-full px-6 pt-5 pb-8">
+                  <div className="max-w-[327px] mx-auto">
+                    <div className="flex flex-col items-center">
+                      <span className="text-4xl font-bold mb-4">{countdown}</span>
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#CB1517] transition-all duration-1000 ease-linear"
+                          style={{ width: `${(countdown / 5) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {question && (
+                <div className="w-full max-w-[327px] bg-white rounded-[20px] mt-8 p-6">
+                  <div className="space-y-4">
+                    <div className="bg-[#131309] rounded-[20px] p-6">
+                      <p className="text-white text-xl text-center">
+                        {question.text}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-[20px] p-4">
+                      <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+                        {question.content}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!isModerator && question && !hasAnswered && (
+                <div className="fixed bottom-0 left-0 right-0">
+                  <div className="bg-white w-full px-6 pt-5 pb-8">
+                    <div className="max-w-[327px] mx-auto space-y-4">
+                      <textarea
+                        className="w-full min-h-[120px] p-4 border border-[#13130920] rounded-[20px] text-[#131309] resize-none"
+                        placeholder="Tu respuesta"
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                      />
+                      <Button
+                        className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
+                        onClick={handleSubmitAnswer}
+                        disabled={!answer.trim()}
+                      >
+                        Enviar respuesta
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!isModerator && hasAnswered && (
+                <div className="fixed bottom-0 left-0 right-0">
+                  <div className="bg-white w-full px-6 pt-5 pb-8">
+                    <div className="max-w-[327px] mx-auto flex flex-col items-center">
+                      {isReadingAnswers ? (
+                        <p className="text-[#131309] text-xl font-bold">
+                          El moderador está leyendo las respuestas
+                        </p>
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 bg-[#131309] rounded-full flex items-center justify-center mb-6">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                              <path d="M20 6L9 17L4 12" stroke="#9FFF00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <p className="text-[#131309] text-2xl font-bold mb-4">
+                            ¡Respuesta enviada!
+                          </p>
+                          <p className="text-[#131309] text-base text-center">
+                            {moderator?.name} os leerá vuestra mierda de respuestas cuando todos la hayan enviado.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isModerator && question && !isReadingAnswers && (
+                <div className="fixed bottom-0 left-0 right-0">
+                  <div className="bg-white w-full px-6 pt-5 pb-8">
+                    <div className="max-w-[327px] mx-auto flex flex-col items-center">
+                      {pendingPlayers.length > 0 ? (
+                        <>
+                          <p className="text-[#131309] text-base sm:text-lg font-bold mb-4 whitespace-nowrap">
+                            Quedan por responder: {pendingPlayers.length > 0 ? (
+                              <>
+                                {pendingPlayers[0]?.name}
+                                {pendingPlayers.length > 1 && (
+                                  <>
+                                    {pendingPlayers.length === 2 ? ' y ' : ', '}
+                                    {pendingPlayers[1]?.name}
+                                    {pendingPlayers.length > 2 && ` y ${pendingPlayers.length - 2} más`}
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              "Nadie"
+                            )}
+                          </p>
+                          
+                          <Button
+                            className="w-full h-12 bg-[#131309] hover:bg-[#131309] rounded-[10px] font-bold text-base mb-6 relative overflow-hidden group"
+                            onClick={async () => {
+                              console.log('🤬 Enviando insulto al resto por broadcast...');
+                              // Enviar broadcast en lugar de actualizar la DB
+                              supabase
+                                .channel('insulto-broadcast')
+                                .send({
+                                  type: 'broadcast',
+                                  event: 'insulto',
+                                  payload: { roundId: round.id }
+                                })
+                                .then(() => console.log('✅ Broadcast enviado correctamente'))
+                                .catch(err => console.error('❌ Error enviando broadcast:', err));
+                            }}
+                          >
+                            {/* Efecto de borde de fuego */}
+                            <span className="absolute inset-0 rounded-[10px] border-2 border-[#FF5700] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            
+                            {/* Animación de brillo de fuego en los bordes */}
+                            <span className="absolute inset-0 rounded-[10px] shadow-[0_0_10px_3px_rgba(255,87,0,0.7)] opacity-0 group-hover:opacity-100 animate-fire-border"></span>
+                            
+                            <span className="relative z-10 text-white">Insulta al resto</span>
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-[#131309] text-base mb-4">
+                          ¡Todas las respuestas recibidas!
+                        </p>
+                      )}
+                      
+                      <Button
+                        className="w-full h-12 bg-[#804000] hover:bg-[#603000] text-white rounded-[10px] font-bold text-base"
+                        onClick={handleStartReadingAnswers}
+                        disabled={pendingPlayers.length > 0}
+                      >
+                        Leer las respuestas
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+>>>>>>> ac20bc9 (refactor: centralize categories table and update types & UI; set login/signup card bg white)
       {!isModerator && showInsult && <InsultPopup />}
     </div>
   );

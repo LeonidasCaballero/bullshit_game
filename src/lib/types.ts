@@ -10,35 +10,38 @@ export interface Player {
   id: string;
   game_id: string;
   name: string;
-  created_at: string;
-  status: 'online' | 'offline';
-  last_seen: string;
+  avatar_url?: string;
   avatar_color: string;
-  avatar: string;
+  created_at: string;
+  last_seen: string;
+  is_host?: boolean;
 }
 
 export interface Round {
   id: string;
   game_id: string;
-  category: 'pelicula' | 'sigla' | 'personaje';
-  moderator_id: string;
-  created_at: string;
-  active: boolean;
   number: number;
-  question_id: string | null;
+  moderator_id: string;
+  category_id: string;
+  category_name?: string;
+  active: boolean;
+  question_id: string;
   voting_phase: boolean;
   reading_phase: boolean;
   results_phase: boolean;
-  scoring_phase: boolean;
+  scoring_phase?: boolean;
+  created_at?: string;
 }
 
 export interface Question {
   id: string;
-  category: 'pelicula' | 'sigla' | 'personaje';
-  type: 1 | 2;
+  category_id: string;
+  category_name?: string;
+  type: number;
   text: string;
   content: string;
   correct_answer: string;
+  created_at?: string;
 }
 
 export interface Answer {
@@ -88,4 +91,10 @@ export interface PlayerScoreData {
   isCurrentPlayer: boolean;
   voteIsCorrect: boolean | null; // null if didn't vote
   votedAnswer: string | null; // null if didn't vote
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  created_at?: string;
 }
