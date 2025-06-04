@@ -28,7 +28,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             Resultados
           </h2>
           <p className="text-white text-center">
-            {question.text}: <span className="font-bold">{question.correct_answer}</span>
+            {question.text}: <span className="font-bold">{question.content}</span>
           </p>
         </div>
         <div className="space-y-4">
