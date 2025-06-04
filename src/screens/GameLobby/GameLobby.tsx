@@ -25,6 +25,7 @@ export const GameLobby = (): JSX.Element => {
   const [showTitle, setShowTitle] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [showGameName, setShowGameName] = useState(false);
+  const [selectedRounds, setSelectedRounds] = useState<number>(8);
 
   const ensureQuestionsExist = async () => {
     try {
@@ -316,12 +317,12 @@ export const GameLobby = (): JSX.Element => {
       }
       
       const roundCategoryIds = [...uniqueCategoryIds];
-      while (roundCategoryIds.length < 4 && uniqueCategoryIds.length > 0) {
+      while (roundCategoryIds.length < selectedRounds && uniqueCategoryIds.length > 0) {
         roundCategoryIds.push(uniqueCategoryIds[0]); // Repetir si no hay suficientes
       }
       
       const roundsToInsert = [];
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < selectedRounds; i++) {
         const selectedCategoryId = roundCategoryIds[i % roundCategoryIds.length];
         const questionsInCat = questionsByCategoryId[selectedCategoryId];
         
@@ -525,6 +526,17 @@ export const GameLobby = (): JSX.Element => {
       {isFirstPlayer && (
         <div className="fixed bottom-0 left-0 right-0 bg-white px-6 pt-5 pb-8">
           <div className="max-w-[327px] mx-auto space-y-4">
+            <div className="flex justify-center gap-3 mb-2">
+              {[8,12,16].map(n => (
+                <button
+                  key={n}
+                  onClick={()=>setSelectedRounds(n)}
+                  className={`px-4 py-2 rounded-full border font-bold text-sm transition-colors ${selectedRounds===n ? 'bg-[#804000] text-white' : 'bg-white text-[#131309] border-[#804000]'}`}
+                >
+                  {n} rondas
+                </button>
+              ))}
+            </div>
             <p className="text-[#131309] text-center">
               Eres el primero en llegar. Comienza la partida cuando estéis todos aquí.
             </p>
