@@ -1575,8 +1575,8 @@ export const GameRound = (): JSX.Element => {
             <div className="bg-[#131309] rounded-[20px] p-6">
               <p className="text-white text-xl text-center">{question?.text}</p>
             </div>
-            <div className="bg-white rounded-[20px] p-4">
-              <p className="[font-family:'Londrina_Solid'] text-[40px] text-[#131309] text-center">
+            <div className="bg-white rounded-[20px] p-4 h-[200px] flex items-center justify-center">
+              <p className="[font-family:'Londrina_Solid'] text-[#131309] text-center leading-tight w-full text-[clamp(24px,5vw,40px)]">
                 {question?.content}
               </p>
             </div>
