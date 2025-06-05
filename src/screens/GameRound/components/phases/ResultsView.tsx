@@ -107,8 +107,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <div className="fixed bottom-0 left-0 right-0">
         <div className="bg-white w-full px-6 pt-5 pb-8">
           <div className="max-w-[327px] mx-auto flex flex-col items-center">
-            <p className="text-[#131309] text-xl font-bold mb-4 text-center">
-              Siguiente ronda en {resultsCountdown}
+            <p className="text-[#131309] text-2xl font-bold mb-4 text-center">
+              {resultsCountdown}
             </p>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div

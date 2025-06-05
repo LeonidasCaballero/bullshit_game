@@ -124,7 +124,7 @@ export const RoundIntro = () => {
         <div className="bg-white w-full px-6 pt-5 pb-8">
           <div className="max-w-[327px] mx-auto">
             <div className="flex flex-col items-center">
-              <span className="text-xl font-bold mb-4">{countdown}s</span>
+              <span className="text-2xl font-bold mb-4">{countdown}</span>
               <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#804000] transition-all duration-1000 ease-linear"
