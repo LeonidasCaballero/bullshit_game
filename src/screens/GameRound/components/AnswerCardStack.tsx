@@ -14,11 +14,18 @@ export const AnswerCardStack: React.FC<AnswerCardStackProps> = ({
   slideDirection,
   currentAnswerIndex,
 }) => {
+  const currentCard = shuffledAnswers[currentAnswerIndex];
+
+  if (!currentCard) {
+    // Array aún no está listo o índice fuera de rango.
+    return <div className="h-[300px]" />;
+  }
+
   return (
     <div className="relative h-[300px]">
       {exitingCards.map((card) => (
         <div
-          key={`exiting-${card.index}`}
+          key={`exiting-${card.index}-${card.content}`}
           className={`absolute top-0 left-0 right-0 w-full h-[300px] ${
             slideDirection === "left" ? "animate-exitLeft" : "animate-exitRight"
           }`}
@@ -66,7 +73,7 @@ export const AnswerCardStack: React.FC<AnswerCardStackProps> = ({
               className="text-[#131309] text-2xl"
               style={{ fontFamily: "Caveat, cursive" }}
             >
-              {shuffledAnswers[currentAnswerIndex].content}
+              {currentCard.content}
             </p>
           </div>
         </div>

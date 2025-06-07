@@ -51,7 +51,11 @@ export const NextRound = () => {
 
         if (!nextRound) {
           console.log('🏁 Fin del juego - No hay más rondas');
-          // TODO: Navegar a pantalla final
+          navigate(`/game/${gameId}/final`, {
+            state: {
+              playerName: location.state?.playerName,
+            }
+          });
           return;
         }
 

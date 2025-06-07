@@ -9,6 +9,7 @@ import { GameRound } from "./screens/GameRound";
 import { RoundIntro } from "./screens/RoundIntro";
 import { GameScores } from "./screens/GameScores";
 import { NextRound } from "./screens/NextRound";
+import { FinalScores } from "./screens/FinalScores";
 import { SupabaseProvider } from "./contexts/SupabaseContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -35,6 +36,7 @@ createRoot(document.getElementById("app") as HTMLElement).render(
               <Route path="/game/:gameId/round" element={<GameRound />} />
               <Route path="/game/:gameId/scores" element={<GameScores />} />
               <Route path="/game/:gameId/next-round" element={<NextRound />} />
+              <Route path="/game/:gameId/final" element={<FinalScores />} />
             </Routes>
           </Router>
         </AuthProvider>
