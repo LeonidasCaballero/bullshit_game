@@ -9,7 +9,7 @@ import { GameRound } from "./screens/GameRound";
 import { RoundIntro } from "./screens/RoundIntro";
 import { GameScores } from "./screens/GameScores";
 import { NextRound } from "./screens/NextRound";
-import { FinalScores } from "./screens/FinalScores";
+import { FinalScores } from "./screens/FinalScores/FinalScores";
 import { SupabaseProvider } from "./contexts/SupabaseContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";

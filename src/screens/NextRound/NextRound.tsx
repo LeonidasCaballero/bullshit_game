@@ -42,9 +42,9 @@ export const NextRound = () => {
           .select('*')
           .eq('game_id', gameId)
           .eq('number', currentRoundNumber + 1)
-          .single();
+          .maybeSingle();
 
-        if (fetchError) {
+        if (fetchError && fetchError.code !== 'PGRST116') {
           console.error('❌ Error al obtener siguiente ronda:', fetchError);
           throw fetchError;
         }
